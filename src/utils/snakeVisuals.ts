@@ -9,9 +9,18 @@ export interface SnakeVisual {
 }
 
 export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
-  // Snake positions from the existing game logic
+  // Updated snake positions based on user specifications
   const snakePositions = {
-    16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78
+    38: 15,
+    29: 8,
+    47: 19,
+    53: 35,
+    62: 55,
+    86: 54,
+    92: 70,
+    94: 6,
+    97: 78,
+    82: 65
   };
 
   // Available snake images
