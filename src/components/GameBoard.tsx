@@ -224,30 +224,33 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
   };
 
   return (
-    <div className={`min-h-screen p-4 ${themeColors.background}`}>
+    <div className="min-h-screen p-4 bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Modern Game Header */}
-        <Card className="p-6 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+        {/* Romantic Game Header */}
+        <Card className="p-6 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                JOU Game
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-rose-500 to-purple-600 bg-clip-text text-transparent">
+                JOU Game ✨
               </h1>
-              <p className="text-gray-600 mt-1">Room: <span className="font-mono font-semibold">{roomCode}</span></p>
+              <p className="text-gray-600 mt-1">Emotional Journey • Room: <span className="font-mono font-semibold text-pink-600">{roomCode}</span></p>
             </div>
           </div>
         </Card>
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Modern Game Board */}
-          <Card className="xl:col-span-3 p-8 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+          {/* Romantic Game Board */}
+          <Card className="xl:col-span-3 p-8 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
-                Game Board
+              <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+                Couples' Emotional Journey Board
               </h2>
               <div 
-                className="relative grid grid-cols-10 gap-2 mx-auto p-4 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 rounded-2xl shadow-inner"
-                style={{ width: 'fit-content' }}
+                className="relative grid grid-cols-10 gap-1 mx-auto p-6 bg-gradient-to-br from-pink-50/80 via-purple-50/80 to-blue-50/80 rounded-3xl shadow-inner border-2 border-pink-100/30"
+                style={{ 
+                  width: 'fit-content',
+                  aspectRatio: '1/1'
+                }}
               >
                 {renderBoard()}
                 <SnakeOverlay relationshipType={gameData.relationshipType} />
@@ -256,8 +259,8 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
             </div>
           </Card>
 
-          {/* Modern Game Controls */}
-          <Card className="p-6 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+          {/* Romantic Game Controls */}
+          <Card className="p-6 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
             <div className="space-y-6">
               <DiceController
                 diceValue={diceValue}
