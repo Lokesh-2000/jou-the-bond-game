@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { getQuestionForRelationship } from '@/utils/questionSystem';
 import { getThemeColors } from '@/utils/gameThemes';
 import SnakeOverlay from '@/components/SnakeOverlay';
+import BoardTile from '@/components/BoardTile';
+import DiceController from '@/components/DiceController';
+import GameStatus from '@/components/GameStatus';
+import QuestionModal from '@/components/QuestionModal';
+import ReactionModal from '@/components/ReactionModal';
 
 interface GameBoardProps {
   gameData: any;
@@ -200,32 +200,17 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       const hasLadder = ladders[i as keyof typeof ladders];
       
       tiles.push(
-        <div 
-          key={i} 
-          className={`
-            relative w-12 h-12 border border-gray-300 flex items-center justify-center text-xs font-bold
-            ${themeColors.board}
-            ${hasSnake ? 'bg-red-100/50' : ''}
-            ${hasLadder ? 'bg-green-100/50' : ''}
-          `}
-          style={{
-            gridRow: row + 1,
-            gridColumn: col + 1
-          }}
-        >
-          {i}
-          {hasLadder && <span className="absolute top-0 right-0 text-xs z-10">🪜</span>}
-          {hasPlayer1 && (
-            <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full ${themeColors.player1} flex items-center justify-center text-white text-xs z-20`}>
-              1
-            </div>
-          )}
-          {hasPlayer2 && (
-            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${themeColors.player2} flex items-center justify-center text-white text-xs z-20`}>
-              2
-            </div>
-          )}
-        </div>
+        <BoardTile
+          key={i}
+          tileNumber={i}
+          hasPlayer1={hasPlayer1}
+          hasPlayer2={hasPlayer2}
+          hasSnake={!!hasSnake}
+          hasLadder={!!hasLadder}
+          themeColors={themeColors}
+          row={row}
+          col={col}
+        />
       );
     }
     return tiles;
@@ -233,30 +218,28 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
 
   return (
     <div className={`min-h-screen p-4 ${themeColors.background}`}>
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Game Header */}
-        <Card className="p-4 bg-white/90 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Modern Game Header */}
+        <Card className="p-6 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold">JOU Game</h1>
-              <p className="text-gray-600">Room: {roomCode}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold">Current Turn</p>
-              <Badge className={currentPlayer === 1 ? themeColors.player1 : themeColors.player2}>
-                Player {currentPlayer}
-              </Badge>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                JOU Game
+              </h1>
+              <p className="text-gray-600 mt-1">Room: <span className="font-mono font-semibold">{roomCode}</span></p>
             </div>
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Game Board */}
-          <Card className="lg:col-span-3 p-6 bg-white/90 backdrop-blur-sm">
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-center">Game Board</h2>
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Modern Game Board */}
+          <Card className="xl:col-span-3 p-8 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
+                Game Board
+              </h2>
               <div 
-                className="relative grid grid-cols-10 gap-1 mx-auto"
+                className="relative grid grid-cols-10 gap-2 mx-auto p-4 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 rounded-2xl shadow-inner"
                 style={{ width: 'fit-content' }}
               >
                 {renderBoard()}
@@ -265,118 +248,47 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
             </div>
           </Card>
 
-          {/* Game Controls */}
-          <Card className="p-6 bg-white/90 backdrop-blur-sm space-y-4">
-            <div className="text-center">
-              <div className={`w-16 h-16 mx-auto rounded-lg ${themeColors.dice} flex items-center justify-center text-2xl font-bold text-white mb-4`}>
-                {diceValue}
-              </div>
-              <Button 
-                onClick={rollDice}
-                disabled={isRolling}
-                className={`w-full ${themeColors.button}`}
-              >
-                {isRolling ? 'Rolling...' : 'Roll Dice'}
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-semibold">Player Positions</h3>
-              <div className="space-y-1">
-                <div className="flex justify-between">
-                  <span>Player 1:</span>
-                  <span>{playerPositions.player1}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Player 2:</span>
-                  <span>{playerPositions.player2}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-xs text-gray-600">
-              <p>🐍 = Question</p>
-              <p>🪜 = Ladder up</p>
-              <p>Roll 6 to start & get extra turn</p>
+          {/* Modern Game Controls */}
+          <Card className="p-6 bg-white/80 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+            <div className="space-y-6">
+              <DiceController
+                diceValue={diceValue}
+                isRolling={isRolling}
+                onRollDice={rollDice}
+                themeColors={themeColors}
+              />
+              
+              <GameStatus
+                currentPlayer={currentPlayer}
+                playerPositions={playerPositions}
+                roomCode={roomCode}
+                themeColors={themeColors}
+              />
             </div>
           </Card>
         </div>
 
-        {/* Question Dialog */}
-        <Dialog open={showQuestion} onOpenChange={setShowQuestion}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Question Time! 🐍</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-lg">{currentQuestion}</p>
-              <Textarea
-                placeholder="Your answer..."
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                maxLength={120}
-                rows={3}
-              />
-              <div className="text-xs text-gray-500">
-                {answer.length}/120 characters
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handleAnswerSubmit}
-                  disabled={!answer.trim()}
-                  className="flex-1"
-                >
-                  Submit Answer
-                </Button>
-                {!mirrorUsed[`player${currentPlayer}` as keyof typeof mirrorUsed] && (
-                  <Button 
-                    variant="outline" 
-                    onClick={handleMirrorQuestion}
-                    className="text-xs"
-                  >
-                    🔁 Mirror
-                  </Button>
-                )}
-                {canSkip && (
-                  <Button 
-                    variant="outline" 
-                    onClick={handleSkipQuestion}
-                    className="text-xs"
-                  >
-                    🛑 Skip
-                  </Button>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Question Modal */}
+        <QuestionModal
+          showQuestion={showQuestion}
+          currentQuestion={currentQuestion}
+          answer={answer}
+          setAnswer={setAnswer}
+          onSubmit={handleAnswerSubmit}
+          onMirror={handleMirrorQuestion}
+          onSkip={handleSkipQuestion}
+          canMirror={!mirrorUsed[`player${currentPlayer}` as keyof typeof mirrorUsed]}
+          canSkip={canSkip}
+          onClose={() => setShowQuestion(false)}
+        />
 
-        {/* Reaction Dialog */}
-        <Dialog open={showReactions} onOpenChange={setShowReactions}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>React to their answer</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="italic">"{lastAnswer}"</p>
-              </div>
-              <div className="flex justify-center gap-4">
-                {['🙃', '😒', '😌', '👌', '💘'].map((emoji) => (
-                  <Button
-                    key={emoji}
-                    variant="outline"
-                    onClick={() => handleReaction(emoji)}
-                    className="text-2xl w-12 h-12 p-0"
-                  >
-                    {emoji}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Reaction Modal */}
+        <ReactionModal
+          showReactions={showReactions}
+          lastAnswer={lastAnswer}
+          onReaction={handleReaction}
+          onClose={() => setShowReactions(false)}
+        />
       </div>
     </div>
   );
