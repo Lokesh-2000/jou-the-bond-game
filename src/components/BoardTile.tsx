@@ -39,12 +39,6 @@ const BoardTile = ({
         {tileNumber}
       </span>
       
-      {hasLadder && (
-        <span className="absolute -top-1 -right-1 text-lg filter drop-shadow-md">
-          🪜
-        </span>
-      )}
-      
       {hasPlayer1 && (
         <div className={`
           absolute -top-2 -left-2 w-5 h-5 rounded-full 

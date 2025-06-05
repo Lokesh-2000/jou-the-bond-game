@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { getQuestionForRelationship } from '@/utils/questionSystem';
 import { getThemeColors } from '@/utils/gameThemes';
 import SnakeOverlay from '@/components/SnakeOverlay';
+import LadderOverlay from '@/components/LadderOverlay';
 import BoardTile from '@/components/BoardTile';
 import DiceController from '@/components/DiceController';
 import GameStatus from '@/components/GameStatus';
@@ -31,10 +32,9 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
 
   const themeColors = getThemeColors(gameData.relationshipType);
   
-  // Updated snakes and Ladders positions
+  // Updated snakes and ladders positions for emotional narrative
   const snakes = {
     38: 15,
-    29: 8,
     47: 19,
     53: 35,
     62: 55,
@@ -42,11 +42,18 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
     92: 70,
     94: 6,
     97: 78,
-    82: 65
+    82: 65,
+    29: 8
   };
   
   const ladders = {
-    1: 38, 4: 14, 9: 21, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100
+    5: 58,
+    9: 27,
+    33: 87,
+    40: 64,
+    57: 73,
+    63: 81,
+    75: 93
   };
 
   const rollDice = async () => {
@@ -244,6 +251,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               >
                 {renderBoard()}
                 <SnakeOverlay relationshipType={gameData.relationshipType} />
+                <LadderOverlay relationshipType={gameData.relationshipType} />
               </div>
             </div>
           </Card>

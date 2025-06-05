@@ -9,10 +9,9 @@ export interface SnakeVisual {
 }
 
 export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
-  // Updated snake positions based on user specifications
+  // Updated snake positions for emotional pitfalls narrative
   const snakePositions = {
     38: 15,
-    29: 8,
     47: 19,
     53: 35,
     62: 55,
@@ -20,7 +19,8 @@ export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
     92: 70,
     94: 6,
     97: 78,
-    82: 65
+    82: 65,
+    29: 8
   };
 
   // Available snake images
