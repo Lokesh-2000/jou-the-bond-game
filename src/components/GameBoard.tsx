@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { getQuestionForRelationship } from '@/utils/questionSystem';
 import { getThemeColors } from '@/utils/gameThemes';
+import SnakeOverlay from '@/components/SnakeOverlay';
 
 interface GameBoardProps {
   gameData: any;
@@ -196,8 +197,8 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
           className={`
             relative w-12 h-12 border border-gray-300 flex items-center justify-center text-xs font-bold
             ${themeColors.board}
-            ${hasSnake ? 'bg-red-100' : ''}
-            ${hasLadder ? 'bg-green-100' : ''}
+            ${hasSnake ? 'bg-red-100/50' : ''}
+            ${hasLadder ? 'bg-green-100/50' : ''}
           `}
           style={{
             gridRow: row + 1,
@@ -205,15 +206,14 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
           }}
         >
           {i}
-          {hasSnake && <span className="absolute top-0 right-0 text-xs">🐍</span>}
-          {hasLadder && <span className="absolute top-0 right-0 text-xs">🪜</span>}
+          {hasLadder && <span className="absolute top-0 right-0 text-xs z-10">🪜</span>}
           {hasPlayer1 && (
-            <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full ${themeColors.player1} flex items-center justify-center text-white text-xs`}>
+            <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full ${themeColors.player1} flex items-center justify-center text-white text-xs z-20`}>
               1
             </div>
           )}
           {hasPlayer2 && (
-            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${themeColors.player2} flex items-center justify-center text-white text-xs`}>
+            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${themeColors.player2} flex items-center justify-center text-white text-xs z-20`}>
               2
             </div>
           )}
@@ -248,10 +248,11 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Game Board</h2>
               <div 
-                className="grid grid-cols-10 gap-1 mx-auto"
+                className="relative grid grid-cols-10 gap-1 mx-auto"
                 style={{ width: 'fit-content' }}
               >
                 {renderBoard()}
+                <SnakeOverlay relationshipType={gameData.relationshipType} />
               </div>
             </div>
           </Card>
