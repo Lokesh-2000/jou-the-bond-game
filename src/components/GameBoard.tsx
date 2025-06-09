@@ -239,25 +239,25 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
         </Card>
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Game Board with stacked tile format */}
+          {/* Game Board with perfectly centered and aligned tiles */}
           <Card className="xl:col-span-3 p-8 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
                 Couples' Emotional Journey Board
               </h2>
-              <div 
-                className="relative grid grid-cols-10 mx-auto p-6 bg-white rounded-2xl shadow-inner"
-                style={{ 
-                  gap: '0px',
-                  width: 'fit-content',
-                  aspectRatio: '1/1',
-                  border: '4px solid black',
-                  borderRadius: '16px'
-                }}
-              >
-                {renderBoard()}
-                <SnakeOverlay relationshipType={gameData.relationshipType} />
-                <LadderOverlay relationshipType={gameData.relationshipType} />
+              <div className="flex justify-center">
+                <div 
+                  className="relative inline-grid grid-cols-10 p-6 bg-white rounded-2xl shadow-inner"
+                  style={{ 
+                    gap: '0px',
+                    border: '4px solid black',
+                    borderRadius: '16px'
+                  }}
+                >
+                  {renderBoard()}
+                  <SnakeOverlay relationshipType={gameData.relationshipType} />
+                  <LadderOverlay relationshipType={gameData.relationshipType} />
+                </div>
               </div>
             </div>
           </Card>

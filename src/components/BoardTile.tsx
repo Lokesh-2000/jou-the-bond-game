@@ -43,13 +43,15 @@ const BoardTile = ({
   return (
     <div 
       className={`
-        relative w-16 h-16 flex items-center justify-center
+        relative flex items-center justify-center
         transition-all duration-300 hover:scale-105 hover:shadow-lg
         ${getTileColor()}
         ${hasPlayer1 || hasPlayer2 ? 'ring-2 ring-white shadow-lg' : 'shadow-sm'}
         ${isSpecialTile ? 'ring-1 ring-pink-200/50' : ''}
       `}
       style={{
+        width: '64px',
+        height: '64px',
         gridRow: row + 1,
         gridColumn: col + 1,
         border: '3.5px solid black',
@@ -59,17 +61,21 @@ const BoardTile = ({
           '0 2px 6px rgba(0,0,0,0.08)'
       }}
     >
-      {/* Large, high-contrast number */}
+      {/* Large, high-contrast number - always visible */}
       <span className={`
-        text-base font-bold drop-shadow-sm select-none
+        text-lg font-black drop-shadow-md select-none z-10 relative
         ${getTextColor()}
-      `}>
+      `}
+        style={{
+          textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+        }}
+      >
         {tileNumber}
       </span>
       
       {/* Special milestone hearts for key emotional tiles */}
       {isSpecialTile && (
-        <div className="absolute -top-1 -right-1 text-xs">
+        <div className="absolute -top-1 -right-1 text-xs z-20">
           💖
         </div>
       )}
@@ -81,7 +87,7 @@ const BoardTile = ({
           bg-gradient-to-br from-pink-400 to-rose-500
           flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
-          border border-white/20
+          border border-white/20 z-30
         `}>
           1
         </div>
@@ -93,7 +99,7 @@ const BoardTile = ({
           bg-gradient-to-br from-purple-400 to-indigo-500
           flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
-          border border-white/20
+          border border-white/20 z-30
         `}>
           2
         </div>
