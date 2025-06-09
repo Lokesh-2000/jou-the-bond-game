@@ -22,17 +22,21 @@ const SnakeOverlay = ({ relationshipType }: SnakeOverlayProps) => {
     const centerX = (headPos.x + tailPos.x) / 2;
     const centerY = (headPos.y + tailPos.y) / 2;
     
+    // Ensure snake doesn't extend beyond board boundaries
+    const maxWidth = Math.min(distance, 300); // Limit max width
+    const height = 28; // Reduced height to stay within tiles
+    
     return {
       x: centerX,
       y: centerY,
-      width: distance,
-      height: 32,
+      width: maxWidth,
+      height: height,
       rotation: angle
     };
   };
 
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
       {snakeVisuals.map((snake) => {
         const path = calculateSnakePath(snake.headTile, snake.tailTile);
         

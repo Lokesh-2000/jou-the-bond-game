@@ -20,33 +20,21 @@ const BoardTile = ({
   row,
   col 
 }: BoardTileProps) => {
-  // Romantic three-color palette with checkerboard pattern
+  // Two-color alternating pattern: light grey and light pink
   const getTileColor = () => {
-    if (hasSnake) return 'bg-rose-100/90 border-rose-200';
-    if (hasLadder) return 'bg-emerald-100/90 border-emerald-200';
+    if (hasSnake) return 'bg-rose-100/90';
+    if (hasLadder) return 'bg-emerald-100/90';
     
-    // Three-color checkerboard pattern for romantic aesthetic
+    // Alternating pattern between light grey and light pink
     const isEvenTile = tileNumber % 2 === 0;
-    const isEvenRow = Math.floor((100 - tileNumber) / 10) % 2 === 0;
-    
-    if ((isEvenTile && isEvenRow) || (!isEvenTile && !isEvenRow)) {
-      // Light romantic tone 1 - blush pink
-      return 'bg-gradient-to-br from-pink-50 to-rose-50 border-pink-100';
-    } else if (tileNumber % 3 === 0) {
-      // Dark contrasting color - muted navy
-      return 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600';
-    } else {
-      // Light romantic tone 2 - lavender
-      return 'bg-gradient-to-br from-purple-50 to-lavender-50 border-purple-100';
-    }
+    return isEvenTile ? 'bg-gray-200' : 'bg-pink-200';
   };
 
-  // Determine text color based on background
+  // Text color based on background
   const getTextColor = () => {
-    if (tileNumber % 3 === 0 && !hasSnake && !hasLadder) {
-      return 'text-white'; // White text on dark tiles
-    }
-    return hasSnake ? 'text-rose-700' : hasLadder ? 'text-emerald-700' : 'text-gray-800';
+    if (hasSnake) return 'text-rose-700';
+    if (hasLadder) return 'text-emerald-700';
+    return 'text-gray-800';
   };
 
   // Special emotional milestone tiles
@@ -64,11 +52,8 @@ const BoardTile = ({
       style={{
         gridRow: row + 1,
         gridColumn: col + 1,
-        border: '2px solid',
-        borderRadius: '6px',
-        borderColor: hasSnake || hasLadder ? 
-          (hasSnake ? 'rgb(244 163 163)' : 'rgb(167 243 208)') : 
-          'rgb(209 213 219)',
+        border: '3.5px solid black',
+        borderRadius: '0px',
         boxShadow: hasSnake || hasLadder ? 
           '0 4px 12px rgba(0,0,0,0.15)' : 
           '0 2px 6px rgba(0,0,0,0.08)'

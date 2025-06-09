@@ -64,7 +64,7 @@ export const getTilePosition = (tileNumber: number) => {
   return {
     row: row + 1,
     col: col + 1,
-    x: col * 68 + 34, // 68px spacing (64px tile + 4px gap) + 34px for center
-    y: row * 68 + 34  // 68px spacing (64px tile + 4px gap) + 34px for center
+    x: col * 64 + 32, // 64px tile width + 32px for center (no gaps)
+    y: row * 64 + 32  // 64px tile height + 32px for center (no gaps)
   };
 };
