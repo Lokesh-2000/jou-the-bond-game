@@ -55,7 +55,7 @@ const BoardTile = ({
   return (
     <div 
       className={`
-        relative w-12 h-12 flex items-center justify-center
+        relative w-16 h-16 flex items-center justify-center
         transition-all duration-300 hover:scale-105 hover:shadow-lg
         ${getTileColor()}
         ${hasPlayer1 || hasPlayer2 ? 'ring-2 ring-white shadow-lg' : 'shadow-sm'}
@@ -65,7 +65,7 @@ const BoardTile = ({
         gridRow: row + 1,
         gridColumn: col + 1,
         border: '2px solid',
-        borderRadius: '4px',
+        borderRadius: '6px',
         borderColor: hasSnake || hasLadder ? 
           (hasSnake ? 'rgb(244 163 163)' : 'rgb(167 243 208)') : 
           'rgb(209 213 219)',
@@ -76,7 +76,7 @@ const BoardTile = ({
     >
       {/* Large, high-contrast number */}
       <span className={`
-        text-sm font-bold drop-shadow-sm select-none
+        text-base font-bold drop-shadow-sm select-none
         ${getTextColor()}
       `}>
         {tileNumber}
@@ -92,9 +92,9 @@ const BoardTile = ({
       {/* Player indicators with romantic styling */}
       {hasPlayer1 && (
         <div className={`
-          absolute -top-2 -left-2 w-5 h-5 rounded-full 
+          absolute -top-2 -left-2 w-6 h-6 rounded-full 
           bg-gradient-to-br from-pink-400 to-rose-500
-          flex items-center justify-center text-white text-xs font-bold
+          flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
           border border-white/20
         `}>
@@ -104,9 +104,9 @@ const BoardTile = ({
       
       {hasPlayer2 && (
         <div className={`
-          absolute -top-2 -right-2 w-5 h-5 rounded-full 
+          absolute -top-2 -right-2 w-6 h-6 rounded-full 
           bg-gradient-to-br from-purple-400 to-indigo-500
-          flex items-center justify-center text-white text-xs font-bold
+          flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
           border border-white/20
         `}>

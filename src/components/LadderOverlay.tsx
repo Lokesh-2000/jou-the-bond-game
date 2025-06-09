@@ -46,17 +46,21 @@ const LadderOverlay = ({ relationshipType }: LadderOverlayProps) => {
     const startPos = getTilePosition(startTile);
     const endPos = getTilePosition(endTile);
     
-    // Calculate the path between start and end
+    // Calculate the path between start and end with precise positioning
     const deltaX = endPos.x - startPos.x;
     const deltaY = endPos.y - startPos.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
     
+    // Center the ladder exactly between the two tiles
+    const centerX = (startPos.x + endPos.x) / 2;
+    const centerY = (startPos.y + endPos.y) / 2;
+    
     return {
-      x: startPos.x,
-      y: startPos.y,
+      x: centerX,
+      y: centerY,
       width: distance,
-      height: 32,
+      height: 28,
       rotation: angle
     };
   };

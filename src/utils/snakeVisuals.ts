@@ -48,8 +48,8 @@ export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
       headTile,
       tailTile,
       imageUrl: snakeImages[imageIndex],
-      rotation: Math.random() * 20 - 10, // Reduced rotation for better alignment
-      scale: 0.9 + Math.random() * 0.2 // More consistent scaling between 0.9 and 1.1
+      rotation: 0, // No rotation for straight alignment
+      scale: 1.0 // Consistent scaling
     };
   });
 
@@ -64,7 +64,7 @@ export const getTilePosition = (tileNumber: number) => {
   return {
     row: row + 1,
     col: col + 1,
-    x: col * 48 + 24, // 48px tile width + 24px for center
-    y: row * 48 + 24  // 48px tile height + 24px for center
+    x: col * 68 + 34, // 68px spacing (64px tile + 4px gap) + 34px for center
+    y: row * 68 + 34  // 68px spacing (64px tile + 4px gap) + 34px for center
   };
 };

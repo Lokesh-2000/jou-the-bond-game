@@ -12,17 +12,21 @@ const SnakeOverlay = ({ relationshipType }: SnakeOverlayProps) => {
     const headPos = getTilePosition(headTile);
     const tailPos = getTilePosition(tailTile);
     
-    // Calculate the path between head and tail
+    // Calculate the path between head and tail with precise positioning
     const deltaX = tailPos.x - headPos.x;
     const deltaY = tailPos.y - headPos.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
     
+    // Center the snake exactly between the two tiles
+    const centerX = (headPos.x + tailPos.x) / 2;
+    const centerY = (headPos.y + tailPos.y) / 2;
+    
     return {
-      x: headPos.x,
-      y: headPos.y,
+      x: centerX,
+      y: centerY,
       width: distance,
-      height: 40,
+      height: 32,
       rotation: angle
     };
   };
@@ -41,7 +45,7 @@ const SnakeOverlay = ({ relationshipType }: SnakeOverlayProps) => {
               top: path.y - path.height / 2,
               width: path.width,
               height: path.height,
-              transform: `rotate(${path.rotation + snake.rotation}deg) scale(${snake.scale})`,
+              transform: `rotate(${path.rotation}deg) scale(${snake.scale})`,
               transformOrigin: 'center',
               zIndex: 5
             }}
@@ -49,9 +53,9 @@ const SnakeOverlay = ({ relationshipType }: SnakeOverlayProps) => {
             <img
               src={snake.imageUrl}
               alt={`Snake ${snake.id}`}
-              className="w-full h-full object-contain opacity-80"
+              className="w-full h-full object-contain opacity-85"
               style={{
-                filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.25))'
               }}
             />
           </div>
