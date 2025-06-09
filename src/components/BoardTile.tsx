@@ -20,20 +20,33 @@ const BoardTile = ({
   row,
   col 
 }: BoardTileProps) => {
-  // Romantic pastel color scheme for tiles
+  // Romantic three-color palette with checkerboard pattern
   const getTileColor = () => {
-    if (hasSnake) return 'bg-rose-100/80 border-rose-200/60';
-    if (hasLadder) return 'bg-emerald-100/80 border-emerald-200/60';
+    if (hasSnake) return 'bg-rose-100/90 border-rose-200';
+    if (hasLadder) return 'bg-emerald-100/90 border-emerald-200';
     
-    // Alternating soft pastel pattern for romantic aesthetic
+    // Three-color checkerboard pattern for romantic aesthetic
     const isEvenTile = tileNumber % 2 === 0;
     const isEvenRow = Math.floor((100 - tileNumber) / 10) % 2 === 0;
     
     if ((isEvenTile && isEvenRow) || (!isEvenTile && !isEvenRow)) {
-      return 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-100/50';
+      // Light romantic tone 1 - blush pink
+      return 'bg-gradient-to-br from-pink-50 to-rose-50 border-pink-100';
+    } else if (tileNumber % 3 === 0) {
+      // Dark contrasting color - muted navy
+      return 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600';
     } else {
-      return 'bg-gradient-to-br from-blue-50 to-lavender-50 border-blue-100/50';
+      // Light romantic tone 2 - lavender
+      return 'bg-gradient-to-br from-purple-50 to-lavender-50 border-purple-100';
     }
+  };
+
+  // Determine text color based on background
+  const getTextColor = () => {
+    if (tileNumber % 3 === 0 && !hasSnake && !hasLadder) {
+      return 'text-white'; // White text on dark tiles
+    }
+    return hasSnake ? 'text-rose-700' : hasLadder ? 'text-emerald-700' : 'text-gray-800';
   };
 
   // Special emotional milestone tiles
@@ -42,7 +55,7 @@ const BoardTile = ({
   return (
     <div 
       className={`
-        relative w-12 h-12 border-2 flex items-center justify-center
+        relative w-12 h-12 flex items-center justify-center
         transition-all duration-300 hover:scale-105 hover:shadow-lg
         ${getTileColor()}
         ${hasPlayer1 || hasPlayer2 ? 'ring-2 ring-white shadow-lg' : 'shadow-sm'}
@@ -51,7 +64,11 @@ const BoardTile = ({
       style={{
         gridRow: row + 1,
         gridColumn: col + 1,
-        borderRadius: '6px',
+        border: '2px solid',
+        borderRadius: '4px',
+        borderColor: hasSnake || hasLadder ? 
+          (hasSnake ? 'rgb(244 163 163)' : 'rgb(167 243 208)') : 
+          'rgb(209 213 219)',
         boxShadow: hasSnake || hasLadder ? 
           '0 4px 12px rgba(0,0,0,0.15)' : 
           '0 2px 6px rgba(0,0,0,0.08)'
@@ -60,7 +77,7 @@ const BoardTile = ({
       {/* Large, high-contrast number */}
       <span className={`
         text-sm font-bold drop-shadow-sm select-none
-        ${hasSnake ? 'text-rose-700' : hasLadder ? 'text-emerald-700' : 'text-gray-700'}
+        ${getTextColor()}
       `}>
         {tileNumber}
       </span>

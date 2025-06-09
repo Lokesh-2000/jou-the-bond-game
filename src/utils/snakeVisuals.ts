@@ -23,21 +23,21 @@ export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
     29: 8
   };
 
-  // Available snake images
+  // Updated snake images with your new romantic-themed snakes
   const snakeImages = [
-    '/lovable-uploads/f94f84ea-a95b-4a19-b505-280a2b0a3dd5.png', // Blue with green pattern
-    '/lovable-uploads/bf0a357b-08c2-4597-9242-de512e39a502.png', // Green
-    '/lovable-uploads/e6f75d41-4931-4b0c-99a5-67fe301e9eb1.png', // Green with red pattern
-    '/lovable-uploads/2302e7cb-0ce6-4297-85ef-021bc2d391c3.png', // Pink with blue pattern
-    '/lovable-uploads/9216d008-9f9d-4bb9-a95d-f3d38e4ef7cb.png', // Purple with teal
-    '/lovable-uploads/11f6227d-83bd-4976-875a-aa32e29d89f9.png', // Green striped
-    '/lovable-uploads/dd6583ce-8213-49ea-88fb-0983f4853e2c.png', // Green striped variant
-    '/lovable-uploads/0a65f3a0-cc60-47fa-9413-4f904a82a716.png', // Teal with yellow
-    '/lovable-uploads/5ac12cd5-bb5d-4d2d-8972-847750f0aedb.png', // Blue simple
-    '/lovable-uploads/0a931bda-c040-4876-8446-2e9de9c3175e.png'  // Purple cosmic
+    '/lovable-uploads/3a5a1ee6-6988-4949-a893-127c8d18d42b.png', // Blue with green pattern
+    '/lovable-uploads/eb2c3da6-00a9-4159-8760-19c95bd034b3.png', // Soft green
+    '/lovable-uploads/204acf49-5006-4fc7-bc22-fc19f073af75.png', // Green with red pattern
+    '/lovable-uploads/3368fbe9-8a99-449d-9e0d-5ac7958212cb.png', // Pink with blue pattern
+    '/lovable-uploads/ec8c2aaf-e6d7-4e37-865a-063afc44bb8c.png', // Purple cosmic
+    '/lovable-uploads/fdbfa81e-42b5-473f-80fb-77810e332f87.png', // Green striped
+    '/lovable-uploads/6e074d25-3767-4345-97d1-63dc90c88ca4.png', // Green striped variant
+    '/lovable-uploads/c3142509-c7c0-4c02-9914-0d0854c553f2.png', // Teal with yellow
+    '/lovable-uploads/d940a652-6fe8-42ea-8cdb-3b4e8a55953e.png', // Blue simple
+    '/lovable-uploads/ed9d841e-de43-4ed3-982a-9b6d307b4e85.png'  // Purple cosmic variant
   ];
 
-  // Create visual snake data
+  // Create visual snake data with more consistent positioning
   const snakeVisuals: SnakeVisual[] = Object.entries(snakePositions).map(([head, tail], index) => {
     const headTile = parseInt(head);
     const tailTile = tail;
@@ -48,8 +48,8 @@ export const getSnakeVisuals = (relationshipType: string): SnakeVisual[] => {
       headTile,
       tailTile,
       imageUrl: snakeImages[imageIndex],
-      rotation: Math.random() * 30 - 15, // Random rotation between -15 and 15 degrees
-      scale: 0.8 + Math.random() * 0.4 // Random scale between 0.8 and 1.2
+      rotation: Math.random() * 20 - 10, // Reduced rotation for better alignment
+      scale: 0.9 + Math.random() * 0.2 // More consistent scaling between 0.9 and 1.1
     };
   });
 

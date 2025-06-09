@@ -239,17 +239,19 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
         </Card>
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Romantic Game Board */}
+          {/* Romantic Game Board with proper outer boundary */}
           <Card className="xl:col-span-3 p-8 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
                 Couples' Emotional Journey Board
               </h2>
               <div 
-                className="relative grid grid-cols-10 gap-1 mx-auto p-6 bg-gradient-to-br from-pink-50/80 via-purple-50/80 to-blue-50/80 rounded-3xl shadow-inner border-2 border-pink-100/30"
+                className="relative grid grid-cols-10 gap-0 mx-auto p-4 bg-gradient-to-br from-pink-50/80 via-purple-50/80 to-blue-50/80 rounded-2xl shadow-inner"
                 style={{ 
                   width: 'fit-content',
-                  aspectRatio: '1/1'
+                  aspectRatio: '1/1',
+                  border: '3.5px solid rgb(190 24 93)', // Rose-600 for romantic outer boundary
+                  borderRadius: '16px'
                 }}
               >
                 {renderBoard()}
