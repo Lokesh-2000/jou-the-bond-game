@@ -45,9 +45,26 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
 
   useEffect(() => {
     if (gameData.gameState) {
+      console.log('Updating game state from gameData:', gameData.gameState);
       setGameState(gameData.gameState);
     }
   }, [gameData.gameState]);
+
+  // Check if both players are present and game should start
+  useEffect(() => {
+    if (isMultiplayer && gameData.player1Nickname && gameData.player2Nickname && !gameState.gameStarted) {
+      console.log('Both players present, starting game');
+      const newGameState = {
+        ...gameState,
+        gameStarted: true
+      };
+      setGameState(newGameState);
+      
+      if (gameData.onGameStateUpdate) {
+        gameData.onGameStateUpdate(newGameState);
+      }
+    }
+  }, [gameData.player1Nickname, gameData.player2Nickname, gameState.gameStarted, isMultiplayer]);
 
   // Generate simple questions based on game data
   const generateQuestions = () => {
@@ -68,7 +85,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
   });
 
   const rollDice = async () => {
-    if (isRolling || gameState.gameEnded) return;
+    if (isRolling || gameState.gameEnded || !gameState.gameStarted) return;
     if (isMultiplayer && gameState.currentTurn !== currentPlayerId) return;
 
     setIsRolling(true);
@@ -178,8 +195,16 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
           <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl animate-pulse">
             🎮
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">Waiting for Player 2</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {gameData.player2Nickname ? 'Starting Game...' : 'Waiting for Player 2'}
+          </h2>
           <p className="text-gray-600">Share room code: <strong>{roomCode}</strong></p>
+          {gameData.player1Nickname && (
+            <p className="text-green-600">✓ {gameData.player1Nickname} joined</p>
+          )}
+          {gameData.player2Nickname && (
+            <p className="text-green-600">✓ {gameData.player2Nickname} joined</p>
+          )}
         </div>
       </div>
     );
@@ -233,14 +258,14 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       {/* Modals */}
       {currentQuestion && (
         <QuestionModal
-          questionText={currentQuestion}
+          question={currentQuestion}
           onClose={handleQuestionClose}
         />
       )}
 
       {showReaction && (
         <ReactionModal
-          reactionType={reactionType}
+          type={reactionType}
           onClose={handleReactionClose}
         />
       )}
