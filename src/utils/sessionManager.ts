@@ -31,6 +31,7 @@ export interface Session {
 export class SessionManager {
   private channel: RealtimeChannel | null = null;
   private onSessionUpdateCallback: ((session: Session) => void) | null = null;
+  private currentSessionId: string | null = null;
 
   async createSession(gameData: any, playerNickname: string): Promise<string> {
     const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -81,7 +82,7 @@ export class SessionManager {
     }
 
     // Update the session with player 2 info and start the game
-    const currentGameState = existingSession.game_state as GameState;
+    const currentGameState = existingSession.game_state as unknown as GameState;
     const updatedGameState = {
       ...currentGameState,
       game_started: true
@@ -105,7 +106,7 @@ export class SessionManager {
 
     return {
       ...data,
-      game_state: data.game_state as GameState,
+      game_state: data.game_state as unknown as GameState,
       conversation_styles: data.conversation_styles as string[] | null
     } as Session;
   }
@@ -126,7 +127,7 @@ export class SessionManager {
 
     return {
       ...data,
-      game_state: data.game_state as GameState,
+      game_state: data.game_state as unknown as GameState,
       conversation_styles: data.conversation_styles as string[] | null
     } as Session;
   }
@@ -140,7 +141,7 @@ export class SessionManager {
 
     if (!session) return;
 
-    const currentGameState = session.game_state as GameState;
+    const currentGameState = session.game_state as unknown as GameState;
     const updatedGameState = {
       ...currentGameState,
       ...gameState
@@ -157,7 +158,17 @@ export class SessionManager {
   }
 
   subscribeToSession(sessionId: string, onUpdate: (session: Session) => void): void {
+    // If already subscribed to the same session, don't subscribe again
+    if (this.currentSessionId === sessionId && this.channel) {
+      console.log('Already subscribed to session:', sessionId);
+      return;
+    }
+
+    // Clean up existing subscription if any
+    this.unsubscribeFromSession();
+
     this.onSessionUpdateCallback = onUpdate;
+    this.currentSessionId = sessionId;
     
     this.channel = supabase
       .channel(`session_${sessionId}`)
@@ -174,7 +185,7 @@ export class SessionManager {
           if (payload.new) {
             const session = {
               ...payload.new,
-              game_state: payload.new.game_state as GameState,
+              game_state: payload.new.game_state as unknown as GameState,
               conversation_styles: payload.new.conversation_styles as string[] | null
             } as Session;
             onUpdate(session);
@@ -190,6 +201,7 @@ export class SessionManager {
       this.channel = null;
     }
     this.onSessionUpdateCallback = null;
+    this.currentSessionId = null;
   }
 }
 

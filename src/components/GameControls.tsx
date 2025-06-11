@@ -55,9 +55,9 @@ const GameControls = ({
     <Card className="p-6">
       <div className="text-center space-y-4">
         <DiceController 
-          onRoll={onRollDice}
+          onClick={onRollDice}
           disabled={!canRollDice}
-          lastRoll={lastDiceRoll}
+          diceValue={lastDiceRoll}
         />
         
         {isWaitingForOtherPlayer && (

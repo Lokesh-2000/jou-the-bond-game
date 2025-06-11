@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { generateQuestions } from '@/utils/questionSystem';
 import GameBoardGrid from './GameBoardGrid';
 import PlayerInfo from './PlayerInfo';
 import GameControls from './GameControls';
@@ -34,10 +33,9 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
 
   // UI state
   const [isRolling, setIsRolling] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [showReaction, setShowReaction] = useState(false);
   const [reactionType, setReactionType] = useState<'snake' | 'ladder'>('snake');
-  const [questions] = useState(() => generateQuestions(gameData));
 
   const { toast } = useToast();
 
@@ -50,6 +48,18 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       setGameState(gameData.gameState);
     }
   }, [gameData.gameState]);
+
+  // Generate simple questions based on game data
+  const generateQuestions = () => {
+    const questions = [
+      "What's your favorite memory together?",
+      "What's one thing you appreciate about each other?",
+      "If you could travel anywhere together, where would it be?",
+      "What's a goal you'd like to achieve together?",
+      "What's something new you'd like to try together?"
+    ];
+    return questions;
+  };
 
   // Game logic functions
   const getSpecialTiles = () => ({
@@ -106,6 +116,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       // Check for question triggers
       const questionTiles = [10, 20, 30, 40, 50, 60, 70, 80, 90];
       if (questionTiles.includes(newPosition) && !gameState.questionsTriggered.includes(newPosition)) {
+        const questions = generateQuestions();
         const question = questions[Math.floor(Math.random() * questions.length)];
         setCurrentQuestion(question);
         newGameState.questionsTriggered = [...gameState.questionsTriggered, newPosition];
@@ -184,6 +195,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               player1Position={gameState.player1Position}
               player2Position={gameState.player2Position}
               onTileClick={handleTileClick}
+              relationshipType={gameData.relationshipType || 'friend'}
             />
           </div>
 
@@ -212,9 +224,6 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
             />
 
             <GameStatus
-              relationshipType={gameData.relationshipType}
-              conversationStyles={gameData.conversationStyles}
-              customQuestion={gameData.customQuestion}
               roomCode={roomCode}
             />
           </div>
@@ -224,14 +233,14 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       {/* Modals */}
       {currentQuestion && (
         <QuestionModal
-          question={currentQuestion}
+          questionText={currentQuestion}
           onClose={handleQuestionClose}
         />
       )}
 
       {showReaction && (
         <ReactionModal
-          type={reactionType}
+          reactionType={reactionType}
           onClose={handleReactionClose}
         />
       )}

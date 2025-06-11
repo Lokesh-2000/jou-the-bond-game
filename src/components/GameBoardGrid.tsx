@@ -8,9 +8,10 @@ interface GameBoardGridProps {
   player1Position: number;
   player2Position: number;
   onTileClick: (position: number) => void;
+  relationshipType: string;
 }
 
-const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBoardGridProps) => {
+const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relationshipType }: GameBoardGridProps) => {
   const createBoard = () => {
     const tiles = [];
     for (let row = 9; row >= 0; row--) {
@@ -26,7 +27,7 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
         rowTiles.push(
           <BoardTile
             key={position}
-            position={position}
+            tileNumber={position}
             isPlayer1Here={isPlayer1Here}
             isPlayer2Here={isPlayer2Here}
             onClick={() => onTileClick(position)}
@@ -46,8 +47,8 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
     <div className="relative bg-white rounded-lg p-4 shadow-lg">
       <div className="relative">
         {createBoard()}
-        <SnakeOverlay />
-        <LadderOverlay />
+        <SnakeOverlay relationshipType={relationshipType} />
+        <LadderOverlay relationshipType={relationshipType} />
       </div>
     </div>
   );
