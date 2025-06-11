@@ -1,309 +1,240 @@
+
 import { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
-import { getQuestionForRelationship } from '@/utils/questionSystem';
-import { getThemeColors } from '@/utils/gameThemes';
-import SnakeOverlay from '@/components/SnakeOverlay';
-import LadderOverlay from '@/components/LadderOverlay';
-import BoardTile from '@/components/BoardTile';
-import DiceController from '@/components/DiceController';
-import GameStatus from '@/components/GameStatus';
-import QuestionModal from '@/components/QuestionModal';
-import ReactionModal from '@/components/ReactionModal';
+import { useToast } from "@/hooks/use-toast";
+import { generateQuestions } from '@/utils/questionSystem';
+import GameBoardGrid from './GameBoardGrid';
+import PlayerInfo from './PlayerInfo';
+import GameControls from './GameControls';
+import GameStatus from './GameStatus';
+import QuestionModal from './QuestionModal';
+import ReactionModal from './ReactionModal';
 
 interface GameBoardProps {
   gameData: any;
-  roomCode: string;
+  roomCode?: string;
 }
 
 const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [playerPositions, setPlayerPositions] = useState({ player1: 0, player2: 0 });
-  const [diceValue, setDiceValue] = useState(1);
-  const [isRolling, setIsRolling] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [showReactions, setShowReactions] = useState(false);
-  const [lastAnswer, setLastAnswer] = useState('');
-  const [consecutiveSnakes, setConsecutiveSnakes] = useState(0);
-  const [mirrorUsed, setMirrorUsed] = useState({ player1: false, player2: false });
-  const [canSkip, setCanSkip] = useState(false);
+  // Game state
+  const [gameState, setGameState] = useState(() => {
+    if (gameData.gameState) {
+      return gameData.gameState;
+    }
+    return {
+      player1Position: 0,
+      player2Position: 0,
+      currentTurn: 'player1' as 'player1' | 'player2',
+      lastDiceRoll: 1,
+      questionsTriggered: [] as number[],
+      gameStarted: gameData.isMultiplayer ? false : true,
+      gameEnded: false,
+      winner: null as string | null
+    };
+  });
 
-  const themeColors = getThemeColors(gameData.relationshipType);
-  
-  // Updated snakes and ladders positions for emotional narrative
-  const snakes = {
-    38: 15,
-    47: 19,
-    53: 35,
-    62: 55,
-    86: 54,
-    92: 70,
-    94: 6,
-    97: 78,
-    82: 65,
-    29: 8
-  };
-  
-  const ladders = {
-    5: 58,
-    9: 27,
-    33: 87,
-    40: 64,
-    57: 73,
-    63: 81,
-    75: 93
-  };
+  // UI state
+  const [isRolling, setIsRolling] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
+  const [showReaction, setShowReaction] = useState(false);
+  const [reactionType, setReactionType] = useState<'snake' | 'ladder'>('snake');
+  const [questions] = useState(() => generateQuestions(gameData));
+
+  const { toast } = useToast();
+
+  // Multiplayer setup
+  const isMultiplayer = gameData.isMultiplayer || false;
+  const currentPlayerId = gameData.currentPlayerId || 'player1';
+
+  useEffect(() => {
+    if (gameData.gameState) {
+      setGameState(gameData.gameState);
+    }
+  }, [gameData.gameState]);
+
+  // Game logic functions
+  const getSpecialTiles = () => ({
+    snakes: { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78 },
+    ladders: { 1: 38, 4: 14, 9: 21, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100 }
+  });
 
   const rollDice = async () => {
-    if (isRolling) return;
-    
+    if (isRolling || gameState.gameEnded) return;
+    if (isMultiplayer && gameState.currentTurn !== currentPlayerId) return;
+
     setIsRolling(true);
     
-    // Animate dice roll
-    for (let i = 0; i < 10; i++) {
-      setDiceValue(Math.floor(Math.random() * 6) + 1);
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+    // Simulate dice roll animation
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const finalValue = Math.floor(Math.random() * 6) + 1;
-    setDiceValue(finalValue);
-    
-    // Check if player can start (needs 6 to start)
-    const currentPos = playerPositions[`player${currentPlayer}` as keyof typeof playerPositions];
-    
-    if (currentPos === 0 && finalValue !== 6) {
-      setIsRolling(false);
-      setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-      return;
-    }
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const newGameState = { ...gameState, lastDiceRoll: roll };
     
     // Move player
-    const newPos = Math.min(currentPos + finalValue, 100);
-    setPlayerPositions(prev => ({
-      ...prev,
-      [`player${currentPlayer}`]: newPos
-    }));
+    const currentPlayer = gameState.currentTurn;
+    const currentPosition = currentPlayer === 'player1' ? gameState.player1Position : gameState.player2Position;
+    let newPosition = Math.min(100, currentPosition + roll);
     
-    // Check for snakes and ladders
-    setTimeout(() => {
-      handleSpecialTiles(newPos, finalValue);
-    }, 500);
-  };
-
-  const handleSpecialTiles = (position: number, diceRoll: number) => {
-    if (snakes[position as keyof typeof snakes]) {
-      // Snake - ask question
-      const newPos = snakes[position as keyof typeof snakes];
-      setPlayerPositions(prev => ({
-        ...prev,
-        [`player${currentPlayer}`]: newPos
-      }));
-      
-      setConsecutiveSnakes(prev => prev + 1);
-      setCanSkip(consecutiveSnakes >= 1);
-      
-      const question = getQuestionForRelationship(gameData.relationshipType, gameData.conversationStyles);
-      setCurrentQuestion(question);
-      setShowQuestion(true);
-    } else if (ladders[position as keyof typeof ladders]) {
-      // Ladder - move up
-      const newPos = ladders[position as keyof typeof ladders];
-      setPlayerPositions(prev => ({
-        ...prev,
-        [`player${currentPlayer}`]: newPos
-      }));
-      setConsecutiveSnakes(0);
-      
-      // Check for win
-      if (newPos === 100) {
-        handleGameEnd();
-        return;
-      }
-      
-      // Extra turn if rolled 6
-      if (diceRoll !== 6) {
-        setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-      }
+    // Handle special tiles
+    const { snakes, ladders } = getSpecialTiles();
+    
+    if (snakes[newPosition]) {
+      newPosition = snakes[newPosition];
+      setReactionType('snake');
+      setShowReaction(true);
+    } else if (ladders[newPosition]) {
+      newPosition = ladders[newPosition];
+      setReactionType('ladder');
+      setShowReaction(true);
+    }
+    
+    // Update position
+    if (currentPlayer === 'player1') {
+      newGameState.player1Position = newPosition;
     } else {
-      setConsecutiveSnakes(0);
-      
-      // Check for win
-      if (position === 100) {
-        handleGameEnd();
-        return;
+      newGameState.player2Position = newPosition;
+    }
+    
+    // Check for win condition
+    if (newPosition === 100) {
+      newGameState.gameEnded = true;
+      newGameState.winner = currentPlayer;
+      toast({
+        title: "🎉 Congratulations!",
+        description: `${currentPlayer === 'player1' ? gameData.player1Nickname || 'Player 1' : gameData.player2Nickname || 'Player 2'} wins!`,
+      });
+    } else {
+      // Check for question triggers
+      const questionTiles = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+      if (questionTiles.includes(newPosition) && !gameState.questionsTriggered.includes(newPosition)) {
+        const question = questions[Math.floor(Math.random() * questions.length)];
+        setCurrentQuestion(question);
+        newGameState.questionsTriggered = [...gameState.questionsTriggered, newPosition];
       }
       
-      // Extra turn if rolled 6
-      if (diceRoll !== 6) {
-        setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-      }
+      // Switch turns
+      newGameState.currentTurn = currentPlayer === 'player1' ? 'player2' : 'player1';
+    }
+    
+    setGameState(newGameState);
+    
+    // Update multiplayer state if needed
+    if (isMultiplayer && gameData.onGameStateUpdate) {
+      await gameData.onGameStateUpdate(newGameState);
     }
     
     setIsRolling(false);
   };
 
-  const handleAnswerSubmit = () => {
-    if (answer.trim()) {
-      setLastAnswer(answer);
-      setShowQuestion(false);
-      setShowReactions(true);
-      setAnswer('');
-      
-      // Next player's turn after reaction
-      setTimeout(() => {
-        setShowReactions(false);
-        if (diceValue !== 6) {
-          setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-        }
-      }, 3000);
-    }
-  };
-
-  const handleReaction = (emoji: string) => {
-    console.log(`Player reacted with: ${emoji}`);
-    setShowReactions(false);
+  const handleNewGame = () => {
+    if (isMultiplayer) return; // Don't allow new game in multiplayer
     
-    if (diceValue !== 6) {
-      setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-    }
+    setGameState({
+      player1Position: 0,
+      player2Position: 0,
+      currentTurn: 'player1',
+      lastDiceRoll: 1,
+      questionsTriggered: [],
+      gameStarted: true,
+      gameEnded: false,
+      winner: null
+    });
+    setCurrentQuestion(null);
+    setShowReaction(false);
   };
 
-  const handleMirrorQuestion = () => {
-    setMirrorUsed(prev => ({
-      ...prev,
-      [`player${currentPlayer}`]: true
-    }));
-    // Mirror the question back to the other player
-    console.log('Question mirrored');
-  };
-
-  const handleSkipQuestion = () => {
-    setShowQuestion(false);
-    setConsecutiveSnakes(0);
-    setCanSkip(false);
+  const handleTileClick = (position: number) => {
+    if (!gameState.gameEnded) return;
     
-    if (diceValue !== 6) {
-      setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-    }
+    toast({
+      title: "Tile Info",
+      description: `Tile ${position}`,
+    });
   };
 
-  const handleGameEnd = () => {
-    console.log('Game ended!');
-    // TODO: Show game archive screen
+  const handleQuestionClose = () => {
+    setCurrentQuestion(null);
   };
 
-  const renderBoard = () => {
-    const tiles = [];
-    for (let i = 100; i >= 1; i--) {
-      const row = Math.floor((100 - i) / 10);
-      const isEvenRow = row % 2 === 0;
-      const col = isEvenRow ? (100 - i) % 10 : 9 - ((100 - i) % 10);
-      
-      const hasPlayer1 = playerPositions.player1 === i;
-      const hasPlayer2 = playerPositions.player2 === i;
-      const hasSnake = snakes[i as keyof typeof snakes];
-      const hasLadder = ladders[i as keyof typeof ladders];
-      
-      tiles.push(
-        <BoardTile
-          key={i}
-          tileNumber={i}
-          hasPlayer1={hasPlayer1}
-          hasPlayer2={hasPlayer2}
-          hasSnake={!!hasSnake}
-          hasLadder={!!hasLadder}
-          themeColors={themeColors}
-          row={row}
-          col={col}
-        />
-      );
-    }
-    return tiles;
+  const handleReactionClose = () => {
+    setShowReaction(false);
   };
+
+  // Waiting for second player in multiplayer
+  if (isMultiplayer && !gameState.gameStarted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl animate-pulse">
+            🎮
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800">Waiting for Player 2</h2>
+          <p className="text-gray-600">Share room code: <strong>{roomCode}</strong></p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen p-4 bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Romantic Game Header */}
-        <Card className="p-6 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-rose-500 to-purple-600 bg-clip-text text-transparent">
-                JOU Game ✨
-              </h1>
-              <p className="text-gray-600 mt-1">Emotional Journey • Room: <span className="font-mono font-semibold text-pink-600">{roomCode}</span></p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Game Board */}
+          <div className="lg:col-span-2 space-y-6">
+            <GameBoardGrid
+              player1Position={gameState.player1Position}
+              player2Position={gameState.player2Position}
+              onTileClick={handleTileClick}
+            />
           </div>
-        </Card>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Game Board with perfectly centered and aligned tiles */}
-          <Card className="xl:col-span-3 p-8 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
-                Couples' Emotional Journey Board
-              </h2>
-              <div className="flex justify-center">
-                <div 
-                  className="relative inline-grid grid-cols-10 p-6 bg-white rounded-2xl shadow-inner"
-                  style={{ 
-                    gap: '0px',
-                    border: '4px solid black',
-                    borderRadius: '16px'
-                  }}
-                >
-                  {renderBoard()}
-                  <SnakeOverlay relationshipType={gameData.relationshipType} />
-                  <LadderOverlay relationshipType={gameData.relationshipType} />
-                </div>
-              </div>
-            </div>
-          </Card>
+          {/* Game Info Panel */}
+          <div className="space-y-6">
+            <PlayerInfo
+              player1Name={gameData.player1Nickname || gameData.nickname || 'Player 1'}
+              player2Name={gameData.player2Nickname || 'Player 2'}
+              currentTurn={gameState.currentTurn}
+              player1Position={gameState.player1Position}
+              player2Position={gameState.player2Position}
+              isMultiplayer={isMultiplayer}
+              currentPlayerId={currentPlayerId}
+            />
 
-          {/* Romantic Game Controls */}
-          <Card className="p-6 bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-3xl border border-pink-100/50">
-            <div className="space-y-6">
-              <DiceController
-                diceValue={diceValue}
-                isRolling={isRolling}
-                onRollDice={rollDice}
-                themeColors={themeColors}
-              />
-              
-              <GameStatus
-                currentPlayer={currentPlayer}
-                playerPositions={playerPositions}
-                roomCode={roomCode}
-                themeColors={themeColors}
-              />
-            </div>
-          </Card>
+            <GameControls
+              currentTurn={gameState.currentTurn}
+              gameEnded={gameState.gameEnded}
+              winner={gameState.winner}
+              lastDiceRoll={gameState.lastDiceRoll}
+              onRollDice={rollDice}
+              onNewGame={handleNewGame}
+              isMultiplayer={isMultiplayer}
+              currentPlayerId={currentPlayerId}
+              isWaitingForOtherPlayer={isRolling}
+            />
+
+            <GameStatus
+              relationshipType={gameData.relationshipType}
+              conversationStyles={gameData.conversationStyles}
+              customQuestion={gameData.customQuestion}
+              roomCode={roomCode}
+            />
+          </div>
         </div>
-
-        {/* Question Modal */}
-        <QuestionModal
-          showQuestion={showQuestion}
-          currentQuestion={currentQuestion}
-          answer={answer}
-          setAnswer={setAnswer}
-          onSubmit={handleAnswerSubmit}
-          onMirror={handleMirrorQuestion}
-          onSkip={handleSkipQuestion}
-          canMirror={!mirrorUsed[`player${currentPlayer}` as keyof typeof mirrorUsed]}
-          canSkip={canSkip}
-          onClose={() => setShowQuestion(false)}
-        />
-
-        {/* Reaction Modal */}
-        <ReactionModal
-          showReactions={showReactions}
-          lastAnswer={lastAnswer}
-          onReaction={handleReaction}
-          onClose={() => setShowReactions(false)}
-        />
       </div>
+
+      {/* Modals */}
+      {currentQuestion && (
+        <QuestionModal
+          question={currentQuestion}
+          onClose={handleQuestionClose}
+        />
+      )}
+
+      {showReaction && (
+        <ReactionModal
+          type={reactionType}
+          onClose={handleReactionClose}
+        />
+      )}
     </div>
   );
 };

@@ -81,8 +81,9 @@ export class SessionManager {
     }
 
     // Update the session with player 2 info and start the game
+    const currentGameState = existingSession.game_state as GameState;
     const updatedGameState = {
-      ...existingSession.game_state,
+      ...currentGameState,
       game_started: true
     };
 
@@ -102,7 +103,11 @@ export class SessionManager {
       throw new Error('Failed to join session');
     }
 
-    return data;
+    return {
+      ...data,
+      game_state: data.game_state as GameState,
+      conversation_styles: data.conversation_styles as string[] | null
+    } as Session;
   }
 
   async getSession(sessionId: string): Promise<Session | null> {
@@ -117,7 +122,13 @@ export class SessionManager {
       return null;
     }
 
-    return data;
+    if (!data) return null;
+
+    return {
+      ...data,
+      game_state: data.game_state as GameState,
+      conversation_styles: data.conversation_styles as string[] | null
+    } as Session;
   }
 
   async updateGameState(sessionId: string, gameState: Partial<GameState>): Promise<void> {
@@ -129,8 +140,9 @@ export class SessionManager {
 
     if (!session) return;
 
+    const currentGameState = session.game_state as GameState;
     const updatedGameState = {
-      ...session.game_state,
+      ...currentGameState,
       ...gameState
     };
 
@@ -160,7 +172,12 @@ export class SessionManager {
         (payload) => {
           console.log('Session updated:', payload);
           if (payload.new) {
-            onUpdate(payload.new as Session);
+            const session = {
+              ...payload.new,
+              game_state: payload.new.game_state as GameState,
+              conversation_styles: payload.new.conversation_styles as string[] | null
+            } as Session;
+            onUpdate(session);
           }
         }
       )
