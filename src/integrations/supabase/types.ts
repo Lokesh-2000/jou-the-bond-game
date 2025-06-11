@@ -9,7 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      sessions: {
+        Row: {
+          conversation_styles: Json | null
+          created_at: string
+          custom_question: string | null
+          game_state: Json
+          id: string
+          player1_id: string
+          player1_nickname: string | null
+          player2_id: string | null
+          player2_nickname: string | null
+          relationship_type: string | null
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_styles?: Json | null
+          created_at?: string
+          custom_question?: string | null
+          game_state?: Json
+          id?: string
+          player1_id: string
+          player1_nickname?: string | null
+          player2_id?: string | null
+          player2_nickname?: string | null
+          relationship_type?: string | null
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_styles?: Json | null
+          created_at?: string
+          custom_question?: string | null
+          game_state?: Json
+          id?: string
+          player1_id?: string
+          player1_nickname?: string | null
+          player2_id?: string | null
+          player2_nickname?: string | null
+          relationship_type?: string | null
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

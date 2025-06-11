@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import GameSetup from '@/components/GameSetup';
 import InvitePlayer from '@/components/InvitePlayer';
-import GameBoard from '@/components/GameBoard';
+import MultiplayerGameBoard from '@/components/MultiplayerGameBoard';
 import JoinRoom from '@/components/JoinRoom';
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'setup' | 'invite' | 'join' | 'board'>('welcome');
   const [gameData, setGameData] = useState<any>({});
   const [roomCode, setRoomCode] = useState<string>('');
+  const [playerData, setPlayerData] = useState<any>({});
 
   const handleSetupComplete = (setupData: any) => {
     setGameData(setupData);
@@ -23,7 +24,9 @@ const Index = () => {
   };
 
   const handleJoinComplete = (joinData: any) => {
+    setPlayerData(joinData);
     setGameData({ ...gameData, ...joinData });
+    setRoomCode(joinData.sessionId);
     setCurrentScreen('board');
   };
 
@@ -81,7 +84,13 @@ const Index = () => {
       )}
 
       {currentScreen === 'board' && (
-        <GameBoard gameData={gameData} roomCode={roomCode} />
+        <MultiplayerGameBoard 
+          sessionId={roomCode}
+          playerId={playerData.playerId || 'player1'}
+          nickname={playerData.nickname || gameData.nickname || 'Player'}
+          isPlayer2={playerData.isPlayer2 || false}
+          gameData={gameData}
+        />
       )}
     </div>
   );
