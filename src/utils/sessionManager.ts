@@ -1,208 +1,144 @@
+import { createClient } from '@supabase/supabase-js';
 
-import { supabase } from "@/integrations/supabase/client";
-import { RealtimeChannel } from "@supabase/supabase-js";
-
-export interface GameState {
-  player1_position: number;
-  player2_position: number;
-  current_turn: 'player1' | 'player2';
-  last_dice_roll: number;
-  questions_triggered: number[];
-  game_started: boolean;
-  game_ended: boolean;
-  winner: string | null;
-}
-
+// Define types for the data we'll be storing in the session
 export interface Session {
-  id: string;
   session_id: string;
   player1_id: string;
-  player1_nickname: string | null;
   player2_id: string | null;
+  player1_nickname: string | null;
   player2_nickname: string | null;
-  game_state: GameState;
   relationship_type: string | null;
   conversation_styles: string[] | null;
   custom_question: string | null;
-  created_at: string;
-  updated_at: string;
+  game_state: any | null;
 }
 
-export class SessionManager {
-  private channel: RealtimeChannel | null = null;
-  private onSessionUpdateCallback: ((session: Session) => void) | null = null;
-  private currentSessionId: string | null = null;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  async createSession(gameData: any, playerNickname: string): Promise<string> {
-    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const playerId = Math.random().toString(36).substring(2, 10);
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Function to generate a unique session ID
+const generateSessionId = (): string => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+// Session management functions
+export const sessionManager = {
+  async createSession(player1Nickname: string, setupData: any): Promise<Session> {
+    const sessionId = generateSessionId();
+    const player1Id = Math.random().toString(36).substring(2, 15);
 
     const { data, error } = await supabase
       .from('sessions')
-      .insert({
-        session_id: sessionId,
-        player1_id: playerId,
-        player1_nickname: playerNickname,
-        relationship_type: gameData.relationshipType,
-        conversation_styles: gameData.conversationStyles,
-        custom_question: gameData.customQuestion
-      })
+      .insert([
+        {
+          session_id: sessionId,
+          player1_id: player1Id,
+          player1_nickname: player1Nickname,
+          relationship_type: setupData.relationshipType,
+          conversation_styles: setupData.conversationStyles,
+          custom_question: setupData.customQuestion,
+        },
+      ])
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating session:', error);
-      throw new Error('Failed to create session');
+      console.error("Error creating session:", error);
+      throw error;
     }
 
-    return sessionId;
-  }
+    return data;
+  },
 
-  async joinSession(sessionId: string, playerNickname: string): Promise<Session | null> {
-    const playerId = Math.random().toString(36).substring(2, 10);
+  async joinSession(sessionId: string, player2Nickname: string): Promise<Session | null> {
+    const player2Id = Math.random().toString(36).substring(2, 15);
 
-    // First, check if the session exists and has space for player 2
-    const { data: existingSession, error: fetchError } = await supabase
+    const { data, error } = await supabase
       .from('sessions')
-      .select('*')
+      .update({ player2_id: player2Id, player2_nickname: player2Nickname })
       .eq('session_id', sessionId)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error('Error fetching session:', fetchError);
-      throw new Error('Failed to fetch session');
-    }
-
-    if (!existingSession) {
-      return null; // Session not found
-    }
-
-    if (existingSession.player2_id) {
-      throw new Error('Session is already full');
-    }
-
-    // Update the session with player 2 info and start the game
-    const currentGameState = existingSession.game_state as unknown as GameState;
-    const updatedGameState = {
-      ...currentGameState,
-      game_started: true
-    };
-
-    const { data, error } = await supabase
-      .from('sessions')
-      .update({
-        player2_id: playerId,
-        player2_nickname: playerNickname,
-        game_state: updatedGameState
-      })
-      .eq('id', existingSession.id)
+      .eq('player2_id', null) // Ensure only one player joins
       .select()
       .single();
 
     if (error) {
-      console.error('Error joining session:', error);
-      throw new Error('Failed to join session');
+      console.error("Error joining session:", error);
+      throw error;
     }
 
-    return {
-      ...data,
-      game_state: data.game_state as unknown as GameState,
-      conversation_styles: data.conversation_styles as string[] | null
-    } as Session;
-  }
+    return data;
+  },
 
   async getSession(sessionId: string): Promise<Session | null> {
     const { data, error } = await supabase
       .from('sessions')
       .select('*')
       .eq('session_id', sessionId)
-      .maybeSingle();
+      .single();
 
     if (error) {
-      console.error('Error getting session:', error);
+      console.error("Error fetching session:", error);
       return null;
     }
 
-    if (!data) return null;
+    return data;
+  },
 
-    return {
-      ...data,
-      game_state: data.game_state as unknown as GameState,
-      conversation_styles: data.conversation_styles as string[] | null
-    } as Session;
-  }
-
-  async updateGameState(sessionId: string, gameState: Partial<GameState>): Promise<void> {
-    const { data: session } = await supabase
+  async updateGameState(sessionId: string, gameState: any): Promise<Session | null> {
+    const { data, error } = await supabase
       .from('sessions')
-      .select('game_state')
+      .update({ game_state: gameState })
       .eq('session_id', sessionId)
+      .select()
       .single();
 
-    if (!session) return;
-
-    const currentGameState = session.game_state as unknown as GameState;
-    const updatedGameState = {
-      ...currentGameState,
-      ...gameState
-    };
-
-    const { error } = await supabase
-      .from('sessions')
-      .update({ game_state: updatedGameState })
-      .eq('session_id', sessionId);
-
     if (error) {
-      console.error('Error updating game state:', error);
-    }
-  }
-
-  subscribeToSession(sessionId: string, onUpdate: (session: Session) => void): void {
-    // If already subscribed to the same session, don't subscribe again
-    if (this.currentSessionId === sessionId && this.channel) {
-      console.log('Already subscribed to session:', sessionId);
-      return;
+      console.error("Error updating game state:", error);
+      throw error;
     }
 
-    // Clean up existing subscription if any
-    this.unsubscribeFromSession();
+    return data;
+  },
 
-    this.onSessionUpdateCallback = onUpdate;
-    this.currentSessionId = sessionId;
-    
-    this.channel = supabase
-      .channel(`session_${sessionId}`)
+  // Add a real-time listener for session updates
+  subscribeToSession(sessionId: string, callback: (session: Session) => void) {
+    supabase
+      .channel('any')
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'sessions',
-          filter: `session_id=eq.${sessionId}`
-        },
+        { event: '*', schema: 'public', table: 'sessions', filter: `session_id=eq.${sessionId}` },
         (payload) => {
-          console.log('Session updated:', payload);
-          if (payload.new) {
-            const session = {
-              ...payload.new,
-              game_state: payload.new.game_state as unknown as GameState,
-              conversation_styles: payload.new.conversation_styles as string[] | null
-            } as Session;
-            onUpdate(session);
-          }
+          console.log('Change received!', payload)
+          // Pass the updated session data to the callback
+          callback(payload.new as Session);
         }
       )
-      .subscribe();
-  }
+      .subscribe()
+  },
 
-  unsubscribeFromSession(): void {
-    if (this.channel) {
-      supabase.removeChannel(this.channel);
-      this.channel = null;
-    }
-    this.onSessionUpdateCallback = null;
-    this.currentSessionId = null;
-  }
-}
-
-export const sessionManager = new SessionManager();
+  // Unsubscribe from session updates
+  unsubscribeFromSession() {
+    supabase.removeAllChannels();
+  },
+  async updateSessionSetup(sessionId: string, setup: {
+    relationship_type: string;
+    conversation_styles: string[];
+    custom_question?: string;
+  }) {
+    // PATCH the session with new setup by session_id (string), not uuid
+    const { data, error } = await supabase
+      .from('sessions')
+      .update({
+        relationship_type: setup.relationship_type,
+        conversation_styles: setup.conversation_styles,
+        custom_question: setup.custom_question
+      })
+      .eq('session_id', sessionId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};

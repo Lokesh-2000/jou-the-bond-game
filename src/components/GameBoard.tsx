@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import GameBoardGrid from './GameBoardGrid';
 import PlayerInfo from './PlayerInfo';
@@ -7,7 +6,7 @@ import QuestionModal from './QuestionModal';
 import ReactionModal from './ReactionModal';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useQuestions } from './hooks/useQuestions';
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Chat from './Chat';
 
 interface GameBoardProps {
@@ -20,6 +19,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [showReaction, setShowReaction] = useState(false);
   const [reactionType, setReactionType] = useState<'snake' | 'ladder'>('snake');
+  const [questionAnswerSync, setQuestionAnswerSync] = useState<{question: string|null, answer: string|null}>({question: null, answer: null});
 
   const {
     gameState,
@@ -70,15 +70,40 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
   // Show chat only if multiplayer and has a session id
   const showChat = !!gameData.sessionId || !!roomCode;
 
-  // Enhanced: snake triggers question popup always
+  // Listen for gameState changes for multiplayer question/answer visibility
+  useEffect(() => {
+    if (!isMultiplayer || !gameState) return;
+    // If session game state includes a last question/answer, show them
+    if (gameState.lastQuestionAsked || gameState.lastQuestionAnswer) {
+      setQuestionAnswerSync({
+        question: gameState.lastQuestionAsked || null,
+        answer: gameState.lastQuestionAnswer || null
+      });
+    }
+  }, [gameState, isMultiplayer]);
+
+  // Enhanced: snake triggers question popup always (and sync answer)
   const handleRollDice = async () => {
     await rollDiceAndMove({
       onQuestionTriggered: (_, pos) => {
-        setCurrentQuestion(getRandomQuestion());
+        const pickedQuestion = getRandomQuestion();
+        setCurrentQuestion(pickedQuestion);
+        setQuestionAnswerSync({ question: pickedQuestion, answer: null });
         setGameState(gs => ({
           ...gs,
           questionsTriggered: [...gs.questionsTriggered, pos],
+          lastQuestionAsked: pickedQuestion,
+          lastQuestionAnswer: null,
         }));
+        // Multiplayer: share in session
+        if (isMultiplayer && gameData.onGameStateUpdate) {
+          gameData.onGameStateUpdate({
+            ...gameState,
+            questionsTriggered: [...gameState.questionsTriggered, pos],
+            lastQuestionAsked: pickedQuestion,
+            lastQuestionAnswer: null,
+          });
+        }
       },
       onReaction: (type) => {
         setReactionType(type);
@@ -86,12 +111,45 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       },
       toast,
       onSnake: () => {
-        setCurrentQuestion(getRandomQuestion());
+        const pickedQuestion = getRandomQuestion();
+        setCurrentQuestion(pickedQuestion);
+        setQuestionAnswerSync({ question: pickedQuestion, answer: null });
+        setGameState(gs => ({
+          ...gs,
+          lastQuestionAsked: pickedQuestion,
+          lastQuestionAnswer: null,
+        }));
+        if (isMultiplayer && gameData.onGameStateUpdate) {
+          gameData.onGameStateUpdate({
+            ...gameState,
+            lastQuestionAsked: pickedQuestion,
+            lastQuestionAnswer: null
+          });
+        }
       }
     });
   };
 
-  const handleCloseQuestion = () => setCurrentQuestion(null);
+  // When answering, sync to session for Player B to see
+  const handleCloseQuestion = (answer?: string) => {
+    setCurrentQuestion(null);
+    setQuestionAnswerSync(prev => ({
+      ...prev,
+      answer: answer || ""
+    }));
+    setGameState(gs => ({
+      ...gs,
+      lastQuestionAnswer: answer || ""
+    }));
+    // Multiplayer: update session
+    if (isMultiplayer && gameData.onGameStateUpdate) {
+      gameData.onGameStateUpdate({
+        ...gameState,
+        lastQuestionAnswer: answer || ""
+      });
+    }
+  };
+
   const handleCloseReaction = () => setShowReaction(false);
 
   return (
@@ -106,8 +164,6 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               onTileClick={(pos) => handleTileClick(pos, toast)}
               sliding={gameState.sliding}
             />
-
-            {/* Chat replaces room code info */}
             {showChat && (
               <Chat
                 sessionId={gameData.sessionId || roomCode}
@@ -116,7 +172,6 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               />
             )}
           </div>
-
           {/* Game Info Panel */}
           <div className="space-y-6">
             <PlayerInfo
@@ -128,7 +183,6 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               isMultiplayer={isMultiplayer}
               currentPlayerId={currentPlayerId}
             />
-
             <GameControls
               currentTurn={gameState.currentTurn}
               gameEnded={gameState.gameEnded}
@@ -148,25 +202,25 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       </div>
 
       {/* Modals */}
-      {currentQuestion && (
+      {(currentQuestion || questionAnswerSync.question) && (
         <QuestionModal
-          showQuestion={!!currentQuestion}
-          currentQuestion={currentQuestion}
-          answer=""
+          showQuestion={!!currentQuestion || !!questionAnswerSync.question}
+          currentQuestion={currentQuestion || questionAnswerSync.question || ""}
+          answer={questionAnswerSync.answer || ""}
           setAnswer={() => {}}
-          onSubmit={() => setCurrentQuestion(null)}
+          onSubmit={(answer?: string) => handleCloseQuestion(answer)}
           onMirror={() => {}}
-          onSkip={() => setCurrentQuestion(null)}
+          onSkip={() => handleCloseQuestion()}
           canMirror={false}
           canSkip={true}
-          onClose={handleCloseQuestion}
+          onClose={() => setCurrentQuestion(null)}
         />
       )}
 
       {showReaction && (
         <ReactionModal
           showReactions={showReaction}
-          lastAnswer=""
+          lastAnswer={questionAnswerSync.answer || ""}
           onReaction={handleCloseReaction}
           onClose={handleCloseReaction}
         />
