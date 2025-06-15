@@ -1,4 +1,3 @@
-
 import React from "react";
 
 interface BoardTileProps {
@@ -28,7 +27,8 @@ const BoardTile = ({
   // Checkerboard pattern
   const getTileColor = () => {
     const even = (row + col) % 2 === 0;
-    return even ? "bg-[#EDEDED]" : "bg-[#FFD5E5]";
+    // bg-[#EDEDED] darkened by ~20% -> #bfbfbf
+    return even ? "bg-[#bfbfbf]" : "bg-[#FFD5E5]";
   };
 
   // Text color
