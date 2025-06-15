@@ -24,14 +24,17 @@ interface GameBoardGridProps {
 const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBoardGridProps) => {
   const { snakes, ladders } = getSpecialTiles();
 
-  // 10x10 board
+  // 10x10 board, 1 at bottom-left to 10 at bottom-right
+  // 91-100 is top row (left to right), so 100 is top-left
   const createBoard = () => {
     const tiles = [];
     for (let row = 9; row >= 0; row--) {
       for (let col = 0; col < 10; col++) {
-        const position = row % 2 === 1
-          ? row * 10 + (10 - col)
-          : row * 10 + (col + 1);
+        // Even row (from bottom): left to right, Odd: right to left
+        const isEvenRow = row % 2 === 0;
+        const position = isEvenRow
+          ? row * 10 + (col + 1)     // left to right
+          : row * 10 + (10 - col);  // right to left
 
         const hasPlayer1 = player1Position === position;
         const hasPlayer2 = player2Position === position;
@@ -47,7 +50,7 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
             hasSnake={hasSnake}
             hasLadder={hasLadder}
             themeColors={null}
-            row={row}
+            row={9-row} // grid row 1 at bottom
             col={col}
           />
         );
@@ -56,7 +59,6 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
     return tiles;
   };
 
-  // Board aspect & overlays
   return (
     <div
       className="relative mx-auto rounded-lg border-[3px] border-black shadow-xl aspect-square bg-white overflow-visible"

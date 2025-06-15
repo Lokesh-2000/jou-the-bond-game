@@ -27,7 +27,6 @@ const BoardTile = ({
 }: BoardTileProps) => {
   // Checkerboard pattern
   const getTileColor = () => {
-    // Soft alternating: even row, even col => gray, odd row/col => pink
     const even = (row + col) % 2 === 0;
     return even ? "bg-[#EDEDED]" : "bg-[#FFD5E5]";
   };
@@ -55,11 +54,13 @@ const BoardTile = ({
         boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
       }}
     >
-      {/* Number */}
+      {/* Centered Number */}
       <span
         className={`
-          absolute left-1 top-1 text-base sm:text-lg font-bold select-none drop-shadow
+          flex items-center justify-center
+          text-base sm:text-lg font-bold select-none drop-shadow
           ${getTextColor()}
+          absolute inset-0 pointer-events-none
         `}
         style={{
           textShadow:
@@ -80,32 +81,34 @@ const BoardTile = ({
           FINISH
         </span>
       )}
-      {/* Players */}
+      {/* Players as chess pawns */}
       {hasPlayer1 && (
-        <div
+        <span
           className={`
-          absolute -top-2 -left-2 w-6 h-6 rounded-full 
-          bg-gradient-to-br from-pink-400 to-rose-500
-          flex items-center justify-center text-white text-sm font-bold
-          ring-2 ring-white shadow-lg animate-pulse
-          border border-white/20 z-30
-        `}
+            absolute -top-3 -left-1 text-2xl
+            text-purple-600 drop-shadow font-black select-none z-30
+            animate-[bounce_0.8s_1]
+          `}
+          style={{
+            textShadow: "0 1px 3px #fff, 1px 1px 2px #0002",
+          }}
         >
-          1
-        </div>
+          ♟️
+        </span>
       )}
       {hasPlayer2 && (
-        <div
+        <span
           className={`
-          absolute -top-2 -right-2 w-6 h-6 rounded-full 
-          bg-gradient-to-br from-purple-400 to-indigo-500
-          flex items-center justify-center text-white text-sm font-bold
-          ring-2 ring-white shadow-lg animate-pulse
-          border border-white/20 z-30
-        `}
+            absolute -top-3 -right-1 text-2xl
+            text-pink-600 drop-shadow font-black select-none z-30
+            animate-[bounce_0.8s_1]
+          `}
+          style={{
+            textShadow: "0 1px 3px #fff, 1px 1px 2px #0002",
+          }}
         >
-          2
-        </div>
+          ♟️
+        </span>
       )}
     </div>
   );
