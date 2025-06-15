@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import React, { useRef, useEffect } from "react";
 
 // Draw a white dice with black dots, showing the face for a value 1-6
-function DiceSVG({ value, rolling }: { value: number; rolling: boolean }) {
+function DiceSVG({ value, rolling, onClick, disabled }: { value: number; rolling: boolean; onClick: () => void; disabled: boolean }) {
   // Dots positions in px (svg 80x80), for each dice value:
   const dot = (x: number, y: number) => (
     <circle cx={x} cy={y} r={6} fill="#111" />
@@ -21,19 +21,36 @@ function DiceSVG({ value, rolling }: { value: number; rolling: boolean }) {
   // 3D rotation when rolling (animate with CSS)
   return (
     <div
-      className={`w-20 h-20 mx-auto flex items-center justify-center
-        rounded-2xl shadow-2xl bg-white transition-all
-        border-4 border-black relative
+      className={`w-20 h-20 mx-auto flex items-center justify-center rounded-2xl shadow-2xl bg-white transition-all border-4 border-black relative
         ${rolling ? "animate-dice-3d-spin" : ""}
+        ${!disabled ? "cursor-pointer hover:scale-105 hover:shadow-xl" : "cursor-not-allowed"}
       `}
       style={{
         perspective: "500px"
       }}
+      onClick={disabled ? undefined : onClick}
+      tabIndex={disabled ? -1 : 0}
+      role="button"
+      aria-label={disabled ? "Dice rolling" : "Roll the dice"}
     >
       <svg width={80} height={80}>
         <rect x={2} y={2} width={76} height={76} rx={18} fill="#fff" stroke="#222" strokeWidth={4} />
         {p[value] || p[1]}
       </svg>
+      {/* subtle white pulse overlay when rolling */}
+      {rolling && (
+        <div className="absolute inset-0 rounded-2xl bg-white/20 animate-pulse"></div>
+      )}
+      {/* Show overlay text when rolling */}
+      {rolling && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-xl font-semibold text-black opacity-70 animate-fade-in">Rolling...</span>
+        </div>
+      )}
+      {/* Pulse border to hint clickable */}
+      {!disabled && !rolling && (
+        <div className="absolute inset-0 rounded-2xl border-2 border-purple-400/70 animate-pulse pointer-events-none" aria-hidden />
+      )}
     </div>
   );
 }
@@ -74,47 +91,32 @@ const DiceController = ({ diceValue, onClick, disabled }: DiceControllerProps) =
 
   // Fix dice: only animate as rolling when disabled *and* the click just happened.
   useEffect(() => {
-    // Only enable rolling animation when the dice is about to be rolled (i.e., right after button click)
     if (disabled) {
       setRolling(true);
     } else {
-      // Wait for animation to end, then set rolling to false (prevents button becoming stuck)
-      // Animation duration is 1s; use timer to unset.
+      // Wait for animation to end, then set rolling to false
       const timeout = setTimeout(() => setRolling(false), 1000);
       return () => clearTimeout(timeout);
     }
   }, [disabled]);
 
+  // Listen to keyboard (Enter/Space) for accessibility
+  const handleDiceKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!disabled && (e.key === " " || e.key === "Enter")) {
+      onClick();
+    }
+  };
+
   return (
     <div className="text-center space-y-4">
-      <div className="relative">
-        <DiceSVG value={diceValue} rolling={rolling} />
-        {/* subtle white pulse overlay when rolling */}
-        {rolling && (
-          <div className="absolute inset-0 rounded-2xl bg-white/20 animate-pulse"></div>
-        )}
-      </div>
-
-      <Button
+      <DiceSVG
+        value={diceValue}
+        rolling={rolling}
         onClick={onClick}
         disabled={disabled}
-        className={`
-          w-full py-4 text-lg font-semibold rounded-xl
-          bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700
-          transform transition-all duration-200 hover:scale-105
-          shadow-lg hover:shadow-xl
-          disabled:opacity-50 disabled:scale-100
-        `}
-      >
-        {rolling ? (
-          <span className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            Rolling...
-          </span>
-        ) : (
-          "Roll Dice"
-        )}
-      </Button>
+        // Consider passing handleDiceKey for tab accessibility if needed
+      />
+      {/* No button or line below */}
     </div>
   );
 };

@@ -3,7 +3,7 @@
  * Shared hook/config for snake and ladder tile mapping.
  * Used by overlays, board, and game engine logic—all in one place!
  * 
- * Ladders have been reverted to original/classic configuration per user request.
+ * Ladders are now set to user-specified positions.
  */
 export function useSpecialTiles() {
   return {
@@ -28,17 +28,15 @@ export function useSpecialTiles() {
       97: 78,
       98: 78,
     },
-    // Classic/original ladders only (removed ladders added in refactor)
+    // Updated as per user request
     ladders: {
-      1: 38,
-      4: 14,
-      9: 31,
-      21: 42,
-      28: 84,
-      36: 44,
-      51: 67,
-      71: 91,
-      80: 100,
+      5: 57,
+      9: 27,
+      33: 87,
+      40: 64,
+      51: 73,
+      61: 81,
+      76: 84,
     },
   };
 }
