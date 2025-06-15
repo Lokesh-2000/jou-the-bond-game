@@ -5,11 +5,11 @@ import GameControls from "./GameControls";
 interface GameBoardSidebarProps {
   player1Name: string;
   player2Name: string;
-  currentTurn: string;
+  currentTurn: "player1" | "player2";
   player1Position: number;
   player2Position: number;
   isMultiplayer: boolean;
-  currentPlayerId: string;
+  currentPlayerId: "player1" | "player2";
   gameEnded: boolean;
   winner: string | null;
   lastDiceRoll: number;
