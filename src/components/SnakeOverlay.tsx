@@ -1,5 +1,6 @@
-
 import React from "react";
+import SnakeHead from "./SnakeHead";
+import { TILE_SIZE, tileToXY, cubicBezier, cubicBezierDeriv } from "../utils/snakeMath";
 
 // Updated snakes as per prompt
 const SNAKES = [
@@ -15,62 +16,6 @@ const SNAKES = [
   { from: 82, to: 65, color: '#fd3577' },   // pink
   { from: 29, to: 8,  color: '#33a852' },   // green
 ];
-
-const TILE_SIZE = 64;
-
-// Layout: tile 1 (bottom-left), tile 100 (top-left)
-function tileToXY(tileNum: number) {
-  const n = tileNum - 1;
-  const row = n / 10 >> 0;
-  let col = n % 10;
-  col = row % 2 === 0 ? col : 9 - col;
-  return {
-    x: col * TILE_SIZE + TILE_SIZE / 2,
-    y: (9 - row) * TILE_SIZE + TILE_SIZE / 2,
-  };
-}
-
-// Stylized "serious" snake head
-function SnakeHead({ x, y, angle, color }: { x: number, y: number, angle: number, color: string }) {
-  const size = TILE_SIZE * 0.8;
-  return (
-    <g transform={`translate(${x},${y}) rotate(${angle})`}>
-      {/* Head base */}
-      <ellipse cx="0" cy="0" rx={size * 0.32} ry={size * 0.23} fill={color} stroke="#232323" strokeWidth="2"/>
-      {/* Angry eyebrows (serious) */}
-      {/* Left eyebrow */}
-      <path d={`
-        M ${-size * 0.13} ${-size * 0.13}
-        Q ${-size * 0.08} ${-size * 0.19} ${-size * 0.02} ${-size * 0.13}
-      `} stroke="#211" strokeWidth="2" fill="none" />
-      {/* Right eyebrow */}
-      <path d={`
-        M ${size * 0.13} ${-size * 0.13}
-        Q ${size * 0.08} ${-size * 0.19} ${size * 0.02} ${-size * 0.13}
-      `} stroke="#211" strokeWidth="2" fill="none" />
-      {/* Eyes */}
-      <ellipse cx={-size * 0.10} cy={-size * 0.08} rx={size*0.05} ry={size*0.07} fill="#fff" stroke="#222" strokeWidth="1"/>
-      <ellipse cx={-size * 0.10} cy={-size * 0.11} rx={size*0.024} ry={size*0.024} fill="#1b1b1b"/>
-      <ellipse cx={size * 0.10} cy={-size * 0.08} rx={size*0.05} ry={size*0.07} fill="#fff" stroke="#222" strokeWidth="1"/>
-      <ellipse cx={size * 0.10} cy={-size * 0.11} rx={size*0.024} ry={size*0.024} fill="#1b1b1b"/>
-      {/* Nose holes */}
-      <ellipse cx={-size * 0.05} cy={size*0.01} rx={size*0.012} ry={size*0.022} fill="#222"/>
-      <ellipse cx={size * 0.05} cy={size*0.01} rx={size*0.012} ry={size*0.022} fill="#222"/>
-      {/* Mouth: serious (straight or downward) */}
-      <path d={`
-        M ${-size*0.06} ${size*0.11}
-        Q 0 ${size*0.08} ${size*0.06} ${size*0.11}
-      `} fill="none" stroke="#232323" strokeWidth="2" />
-      {/* Tongue (still sticking out) */}
-      <path d={`
-        M 0 ${size*0.17}
-        q 0 ${size*0.07} ${size*0.04} ${size*0.12}
-        M 0 ${size*0.17}
-        q 0 ${size*0.07} -${size*0.04} ${size*0.12}
-      `} fill="none" stroke="#e35555" strokeWidth="2" />
-    </g>
-  );
-}
 
 const SnakeOverlay = () => {
   function renderSnake({ from, to, color, pathOffset }: typeof SNAKES[number], i: number) {
@@ -109,18 +54,6 @@ const SnakeOverlay = () => {
 
     // Find the direction for a sharp tail: interpolate near the end, then extend further
     // Find near-tail direction (derivative at t ~ 1, i.e. 96%)
-    function cubicBezier(ptA: number, ptB: number, ptC: number, ptD: number, t: number) {
-      const mt = 1-t;
-      return mt*mt*mt*ptA
-        + 3*mt*mt*t*ptB
-        + 3*mt*t*t*ptC
-        + t*t*t*ptD;
-    }
-    function cubicBezierDeriv(ptA: number, ptB: number, ptC: number, ptD: number, t: number) {
-      return 3*(1-t)*(1-t)*(ptB-ptA)
-        + 6*(1-t)*t*(ptC-ptB)
-        + 3*t*t*(ptD-ptC);
-    }
     const sharpTailT = 0.96;
     const tailX = cubicBezier(head.x, mid1.x, mid2.x, tail.x, sharpTailT);
     const tailY = cubicBezier(head.y, mid1.y, mid2.y, tail.y, sharpTailT);
@@ -187,7 +120,7 @@ const SnakeOverlay = () => {
           );
         })}
         {/* Snake head */}
-        <SnakeHead x={head.x} y={head.y} angle={angle} color={color}/>
+        <SnakeHead x={head.x} y={head.y} angle={angle} color={color} tileSize={TILE_SIZE} />
         {/* SHARP/POINTED TAIL */}
         <polygon
           points={`${tail.x - thickness*0.22},${tail.y - thickness*0.08} 
@@ -221,4 +154,3 @@ const SnakeOverlay = () => {
 };
 
 export default SnakeOverlay;
-

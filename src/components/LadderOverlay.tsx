@@ -1,5 +1,6 @@
 
 import React from "react";
+import { TILE_SIZE, tileToCorner } from "../utils/ladderMath";
 
 // Ladders (updated positions)
 const LADDERS = [
@@ -7,32 +8,10 @@ const LADDERS = [
   { from: 9, to: 27 },
   { from: 33, to: 87 },
   { from: 40, to: 64 },
-  { from: 51, to: 73 }, // was 57->73
-  { from: 61, to: 81 }, // was 63->81
+  { from: 51, to: 73 },
+  { from: 61, to: 81 },
   { from: 75, to: 93 },
 ];
-
-const TILE_SIZE = 64;
-
-// Helper: get tile corner (corner: 'tl', 'tr', 'bl', 'br')
-// 'from' is always bottom of ladder, so let's put start at bottom left of tile, end at top right
-function tileToCorner(tileNum: number, corner: "tl"|"tr"|"bl"|"br") {
-  const n = tileNum - 1;
-  const row = Math.floor(n / 10);
-  let col = n % 10;
-  if (row % 2 === 1) col = 9 - col;
-  let x = col * TILE_SIZE, y = (9 - row) * TILE_SIZE;
-  if (corner === "tl") {
-    x += TILE_SIZE * 0.21; y += TILE_SIZE * 0.22;
-  } else if (corner === "tr") {
-    x += TILE_SIZE * 0.82; y += TILE_SIZE * 0.18;
-  } else if (corner === "bl") {
-    x += TILE_SIZE * 0.19; y += TILE_SIZE * 0.82;
-  } else if (corner === "br") {
-    x += TILE_SIZE * 0.85; y += TILE_SIZE * 0.80;
-  }
-  return { x, y };
-}
 
 const LadderOverlay = () => {
   const wood = "#9B6830";
@@ -43,20 +22,16 @@ const LadderOverlay = () => {
     const start = tileToCorner(from, "bl");
     const end = tileToCorner(to, "tr");
 
-    // Vector along ladder
     const dx = end.x - start.x,
       dy = end.y - start.y;
     const len = Math.sqrt(dx * dx + dy * dy);
 
-    // Ladder params
     const width = TILE_SIZE * 0.54;
-    const rungs = 10; // more rungs for visual fullness
+    const rungs = 10;
     const rungStep = 1 / (rungs - 1);
 
-    // Orthogonal (perp) unit vector
     const perp = { x: -dy / len, y: dx / len };
 
-    // Side rails
     const leftStart = {
       x: start.x + perp.x * width * 0.5,
       y: start.y + perp.y * width * 0.5,
@@ -74,10 +49,8 @@ const LadderOverlay = () => {
       y: end.y - perp.y * width * 0.5,
     };
 
-    // Shadow offset
     const shadowOffset = TILE_SIZE * 0.11;
 
-    // Draw
     return (
       <g key={`ladder${i}`}>
         {/* Ladder shadow */}
@@ -186,4 +159,3 @@ const LadderOverlay = () => {
 };
 
 export default LadderOverlay;
-
