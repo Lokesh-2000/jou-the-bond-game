@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import GameBoardGrid from './GameBoardGrid';
 import PlayerInfo from './PlayerInfo';
@@ -9,6 +8,7 @@ import ReactionModal from './ReactionModal';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useQuestions } from './hooks/useQuestions';
 import { useState } from "react";
+import Chat from './Chat';
 
 interface GameBoardProps {
   gameData: any;
@@ -61,6 +61,9 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
     );
   }
 
+  // Determine chat context (only show chat if there's a sessionId/roomCode and multiplayer)
+  const showChat = !!gameData.sessionId || !!roomCode;
+
   // Wraps the dice&move logic with UI side effects for questions and reactions
   const handleRollDice = async () => {
     await rollDiceAndMove({
@@ -94,6 +97,15 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               onTileClick={(pos) => handleTileClick(pos, toast)}
               sliding={gameState.sliding}
             />
+
+            {/* Show chat below board IF multiplayer and sessionId */}
+            {showChat && (
+              <Chat
+                sessionId={gameData.sessionId || roomCode}
+                nickname={gameData.nickname || gameData.player1Nickname || gameData.player2Nickname || "Player"}
+                sender={gameData.currentPlayerId || "player1"}
+              />
+            )}
           </div>
 
           {/* Game Info Panel */}
