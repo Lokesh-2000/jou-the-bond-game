@@ -1,18 +1,14 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import BoardTile from './BoardTile';
 import SnakeOverlay, { SNAKES, SNAKE_PATHS } from './SnakeOverlay';
 import LadderOverlay from './LadderOverlay';
+import { useSpecialTiles } from './hooks/useSpecialTiles';
 
 // Utility to determine if tile has a snake or ladder (for board rendering)
-const getSpecialTiles = () => ({
-  snakes: {
-    38: 15, 47: 19, 53: 31, 62: 55, 86: 54, 88: 24, 92: 70, 94: 6, 97: 78, 82: 65, 29: 8,
-  },
-  ladders: {
-    5: 58, 9: 27, 33: 87, 40: 64, 51: 73, 61: 81, 76: 84,
-  }
-});
+// Now uses shared config!
+function getSpecialTiles() {
+  return useSpecialTiles();
+}
 
 interface GameBoardGridProps {
   player1Position: number;

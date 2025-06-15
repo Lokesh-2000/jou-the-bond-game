@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSpecialTiles } from "./useSpecialTiles";
 
 export interface GameState {
   player1Position: number;
@@ -65,47 +66,8 @@ export const useGameEngine = (gameData: any) => {
     // eslint-disable-next-line
   }, [gameData.player1Nickname, gameData.player2Nickname, gameState.gameStarted, isMultiplayer]);
 
-  // Special tile logic helpers
-  const getSpecialTiles = () => ({
-    snakes: {
-      16: 6,
-      29: 8,
-      38: 15,
-      47: 26,
-      49: 11,
-      53: 31,
-      56: 53,
-      62: 19,
-      64: 60,
-      82: 65,
-      86: 54,
-      87: 24,
-      88: 24,
-      92: 70,
-      93: 73,
-      94: 6,
-      95: 75,
-      97: 78,
-      98: 78,
-    },
-    ladders: {
-      1: 38,
-      4: 14,
-      5: 58,
-      9: 27,
-      21: 42,
-      28: 84,
-      33: 87,
-      36: 44,
-      40: 64,
-      // 51: 67, // <-- removed duplicate and kept only one 51 entry below
-      51: 73,
-      61: 81,
-      71: 91,
-      76: 84,
-      80: 100,
-    },
-  });
+  // Use shared hook for snakes/ladders config!
+  const { snakes, ladders } = useSpecialTiles();
 
   /**
    * Animates player token sliding from snake head → tail.

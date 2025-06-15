@@ -1,23 +1,20 @@
-
 import React from "react";
 import { TILE_SIZE, tileToCorner } from "../utils/ladderMath";
+import { useSpecialTiles } from "./hooks/useSpecialTiles";
 
-// All ladders use same rung spacing and rung count.
-const LADDERS = [
-  { from: 5, to: 58 },
-  { from: 9, to: 27 },
-  { from: 33, to: 87 },
-  { from: 40, to: 64 },
-  { from: 51, to: 73 },
-  { from: 61, to: 81 },
-  { from: 76, to: 84 },
-];
-
-const LADDER_RUNG_COUNT = 12; // Same for every ladder
-
+// All ladders are now sourced from one place for consistency.
 const LadderOverlay = () => {
   const wood = "#9B6830";
   const woodDark = "#5B3E16";
+
+  const { ladders } = useSpecialTiles();
+
+  // Convert ladders map to array of {from, to}
+  const LADDERS = Object.entries(ladders)
+    .filter(([from]) => Number(from) < ladders[Number(from)])
+    .map(([from, to]) => ({ from: Number(from), to }));
+
+  const LADDER_RUNG_COUNT = 12; // Same for every ladder
 
   function renderLadder({ from, to }: { from: number; to: number }, i: number) {
     const ladderInset = TILE_SIZE * 0.25;
@@ -193,4 +190,3 @@ const LadderOverlay = () => {
 };
 
 export default LadderOverlay;
-
