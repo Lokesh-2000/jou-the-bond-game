@@ -27,8 +27,8 @@ const GameControls = ({
   currentPlayerId,
   isWaitingForOtherPlayer = false
 }: GameControlsProps) => {
-  const isMyTurn = isMultiplayer ? currentTurn === currentPlayerId : true;
-  const canRollDice = !gameEnded && isMyTurn && !isWaitingForOtherPlayer;
+  // In dynamic mode: no "whose turn", each player can roll any time unless game ended or rolling
+  const canRollDice = !gameEnded && !isWaitingForOtherPlayer;
 
   if (gameEnded) {
     return (
@@ -59,19 +59,6 @@ const GameControls = ({
           disabled={!canRollDice}
           diceValue={lastDiceRoll}
         />
-        
-        {isWaitingForOtherPlayer && (
-          <p className="text-sm text-gray-600">
-            Waiting for other player...
-          </p>
-        )}
-        
-        {isMultiplayer && !isMyTurn && !isWaitingForOtherPlayer && (
-          <p className="text-sm text-gray-600">
-            Waiting for {currentTurn === 'player1' ? 'Player 1' : 'Player 2'} to roll
-          </p>
-        )}
-        
         {!isMultiplayer && (
           <Button 
             onClick={onNewGame} 

@@ -1,4 +1,3 @@
-
 import { useSnakeBodyPath } from "./useSnakeBodyPath";
 import { useSpecialTiles } from "./useSpecialTiles";
 import { GameState } from "./useGameEngine";
@@ -11,6 +10,7 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
   const isMultiplayer = gameData.isMultiplayer || false;
   const currentPlayerId = gameData.currentPlayerId || 'player1';
 
+  /** No more turn gating, any player can move any time */
   async function rollDiceAndMove({
     onQuestionTriggered,
     onReaction,
@@ -28,38 +28,33 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
       console.log("Blocked dice roll: isRolling", isRolling, "gameEnded", gameState.gameEnded, "gameStarted", gameState.gameStarted);
       return;
     }
-    if (isMultiplayer && gameState.currentTurn !== currentPlayerId) {
-      console.log("Blocked: Not this player's turn.", { currentPlayerId, currentTurn: gameState.currentTurn });
-      return;
-    }
 
+    // Detect which player (by ID)
+    const thisPlayer = currentPlayerId;
+    // Only allow the player to roll for THEMSELVES
     setIsRolling(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const roll = Math.floor(Math.random() * 6) + 1;
-    // Work on clone to build new state
     let newGameState: GameState = { ...gameState, lastDiceRoll: roll };
 
-    // Move player
-    const currentPlayer = gameState.currentTurn;
     const currentPosition =
-      currentPlayer === 'player1'
+      thisPlayer === 'player1'
         ? gameState.player1Position
         : gameState.player2Position;
     let newPosition = Math.min(100, currentPosition + roll);
 
-    console.log("Dice rolled:", roll, "by", currentPlayer, "oldPos", currentPosition, "newPos", newPosition);
+    console.log("Dice rolled:", roll, "by", thisPlayer, "oldPos", currentPosition, "newPos", newPosition);
 
     if (snakes[newPosition]) {
       const snakeTail = snakes[newPosition];
       const snakePath = getSnakeBodyPath(newPosition, snakeTail);
       if (snakePath && snakePath.length > 0) {
-        // Provide full GameState, not updater
         setGameState({
           ...gameState,
           sliding: {
             path: snakePath,
-            player: currentPlayer,
+            player: thisPlayer,
           }
         });
         await new Promise(res => setTimeout(res, 2000));
@@ -76,7 +71,7 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
 
     console.log("Moved to:", newPosition);
 
-    if (currentPlayer === 'player1') {
+    if (thisPlayer === 'player1') {
       newGameState.player1Position = newPosition;
     } else {
       newGameState.player2Position = newPosition;
@@ -86,12 +81,12 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
     // Win condition
     if (newPosition === 100) {
       newGameState.gameEnded = true;
-      newGameState.winner = currentPlayer;
+      newGameState.winner = thisPlayer;
       toast &&
         toast({
           title: '🎉 Congratulations!',
           description:
-            (currentPlayer === 'player1'
+            (thisPlayer === 'player1'
               ? gameData.player1Nickname || 'Player 1'
               : gameData.player2Nickname || 'Player 2') + ' wins!',
         });
@@ -108,9 +103,7 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
           newPosition,
         ];
       }
-      // Switch turns
-      newGameState.currentTurn =
-        currentPlayer === 'player1' ? 'player2' : 'player1';
+      // No need to switch turns
     }
 
     setGameState(newGameState);

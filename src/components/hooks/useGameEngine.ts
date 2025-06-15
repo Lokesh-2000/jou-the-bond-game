@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSpecialTiles } from "./useSpecialTiles";
 import { useGameEngineHelpers } from "./gameEngineHelpers";
@@ -6,7 +5,7 @@ import { useGameEngineHelpers } from "./gameEngineHelpers";
 export interface GameState {
   player1Position: number;
   player2Position: number;
-  currentTurn: 'player1' | 'player2';
+  currentTurn: 'player1' | 'player2'; // can keep for legacy, but not used for locking
   lastDiceRoll: number;
   questionsTriggered: number[];
   gameStarted: boolean;
@@ -75,7 +74,7 @@ export const useGameEngine = (gameData: any) => {
   }, [isRolling]);
   // ---
 
-  // Wrap rollDiceAndMove with isRolling tracking
+  // Allow both players to roll without turn locking
   const rollDiceAndMoveWithState = async (args: any) => {
     await rollDiceAndMove({
       ...args,
