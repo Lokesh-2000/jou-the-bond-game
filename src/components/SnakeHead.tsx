@@ -10,74 +10,56 @@ interface SnakeHeadProps {
 }
 
 /**
- * Oval, stylized snake head SVG with "slightly angry" look,
- * NO nostrils or eyebrows. Tongue points opposite the head's angle (toward board tile number).
+ * SnakeHead styled after provided reference image:
+ * - Head is a wide oval with a soft curve at bottom (almost circular)
+ * - Only one (large) eye, left/top side, and pink-red tongue at lower center, NO visible mouth
+ * - Tongue emerges from bottom of head, not forehead
+ * - Matches style: bold, simple highlights, flat banding is handled on body not head
  */
 const SnakeHead = ({ x, y, angle, color, tileSize }: SnakeHeadProps) => {
-  const size = tileSize * 0.8;
+  const size = tileSize * 0.82;
 
-  // Head: Single oval, centered, regardless of color now
+  // Head: wide oval, more circular and a little flattened to match image ref
   const headShape = (
     <ellipse
       cx="0"
       cy="0"
-      rx={size * 0.22}
-      ry={size * 0.29}
+      rx={size * 0.25}
+      ry={size * 0.23}
       fill={color}
       stroke="#232323"
       strokeWidth="2"
     />
   );
 
-  // Eyes: Ovals, angled slightly inward for "angry" look
-  // Angle the eye-groups towards each other with a small skew
-  const eyeRX = size * 0.059;
-  const eyeRY = size * 0.067;
-  const eyeY = -size * 0.13;
-  const eyeXSep = size * 0.12;
+  // Eye (large, only one visible on top/left, matching image): placed at upper left, white circle
+  const eyeCX = -size * 0.08;
+  const eyeCY = -size * 0.09;
+  const eyeR = size * 0.073;
+  // Pupil (off-center, up and left) - as shown in image
+  const pupilCX = eyeCX - size * 0.018;
+  const pupilCY = eyeCY - size * 0.011;
+  const pupilR = size * 0.028;
 
-  // "Angry" eyes: draw eyes as ovals, but pupils off-center and group rotated toward each other
-  // Slightly rotate the white part and more tilt/offset on pupil
-  const leftEyeGroup = (
-    <g transform={`translate(${-eyeXSep},${eyeY}) rotate(-16)`}>
-      <ellipse rx={eyeRX} ry={eyeRY} fill="#fff" stroke="#222" strokeWidth="1"/>
-      {/* Pupil: move up and inward for 'angry' look */}
-      <ellipse cx={-eyeRX*0.27} cy={-eyeRY*0.24} rx={size*0.022} ry={size*0.025} fill="#232323" />
-    </g>
-  );
-  const rightEyeGroup = (
-    <g transform={`translate(${eyeXSep},${eyeY}) rotate(16)`}>
-      <ellipse rx={eyeRX} ry={eyeRY} fill="#fff" stroke="#222" strokeWidth="1"/>
-      {/* Pupil: move up and inward for 'angry' look */}
-      <ellipse cx={eyeRX*0.27} cy={-eyeRY*0.24} rx={size*0.022} ry={size*0.025} fill="#232323" />
+  const eyeGroup = (
+    <g>
+      <ellipse cx={eyeCX} cy={eyeCY} rx={eyeR} ry={eyeR * 1.02} fill="#fff" stroke="#222" strokeWidth={size*0.018} />
+      <ellipse cx={pupilCX} cy={pupilCY} rx={pupilR} ry={pupilR * 1.06} fill="#232323" />
     </g>
   );
 
-  // Mouth: simple horizontal line, not smiling ("serious"/neutral)
-  const mouth = (
-    <path
-      d={`
-        M ${-size*0.051} ${size*0.13}
-        Q 0 ${size*0.136} ${size*0.051} ${size*0.13}
-      `}
-      fill="none"
-      stroke="#232323"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  );
-
-  // Tongue: points OPPOSITE head direction (i.e. 180deg from head angle, toward tile label)
-  // Make it a simple forked, slightly wavy tongue
-  const tongueLen = size * 0.39;
-  // Rotate tongue around (0,0) by 180deg (SVG: head at angle, tongue at angle+180)
+  // No mouth (as per instruction)
+  // Tongue: emerges from bottom center of head, slightly forked and wavy.
+  // Angle: tongue points DOWN from head, with tiny fork
+  const tongueLen = size * 0.38;
+  const tongueBaseY = size * 0.20;
   const tongue = (
-    <g transform={`rotate(180)`}>
+    <g>
       <path
         d={`
-          M 0 ${size*0.23}
-          q ${-size*0.01} ${tongueLen*0.30} 0 ${tongueLen*0.45}
-          q ${size*0.015} ${tongueLen*0.24} ${size*0.025} ${tongueLen*0.41}
+          M 0 ${tongueBaseY}
+          q ${-size*0.011} ${tongueLen*0.18} 0 ${tongueLen*0.48}
+          q ${size*0.012} ${tongueLen*0.23} ${size*0.023} ${tongueLen*0.42}
         `}
         fill="none"
         stroke="#e35555"
@@ -86,13 +68,13 @@ const SnakeHead = ({ x, y, angle, color, tileSize }: SnakeHeadProps) => {
       />
       {/* Forked tip */}
       <path
-        d={`M 0 ${size*0.23 + tongueLen * 0.89} q ${-size*0.02} ${size*0.03} 0 ${size*0.06}`}
+        d={`M 0 ${tongueBaseY + tongueLen * 0.89} q ${-size*0.018} ${size*0.027} 0 ${size*0.049}`}
         fill="none"
         stroke="#e35555"
         strokeWidth="1.1"
       />
       <path
-        d={`M 0 ${size*0.23 + tongueLen * 0.89} q ${size*0.02} ${size*0.03} 0 ${size*0.06}`}
+        d={`M 0 ${tongueBaseY + tongueLen * 0.89} q ${size*0.018} ${size*0.027} 0 ${size*0.049}`}
         fill="none"
         stroke="#e35555"
         strokeWidth="1.1"
@@ -103,12 +85,11 @@ const SnakeHead = ({ x, y, angle, color, tileSize }: SnakeHeadProps) => {
   return (
     <g transform={`translate(${x},${y}) rotate(${angle})`}>
       {headShape}
-      {leftEyeGroup}
-      {rightEyeGroup}
-      {mouth}
+      {eyeGroup}
       {tongue}
     </g>
   );
 };
 
 export default SnakeHead;
+

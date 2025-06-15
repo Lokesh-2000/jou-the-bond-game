@@ -1,4 +1,3 @@
-
 import React from "react";
 import SnakeHead from "./SnakeHead";
 import { TILE_SIZE, tileToXY, cubicBezier, cubicBezierDeriv } from "../utils/snakeMath";
@@ -20,8 +19,8 @@ const SNAKES = [
 
 // Use a color-to-style map for custom tail/shape by color (from refs)
 const SNAKE_TAIL_STYLES: Record<string, { tailTaper: number; tailLen: number; tailCurve?: number }> = {
-  "#12a9e9": { tailTaper: 0.10, tailLen: 2.5, tailCurve: 0.13 }, // ultra-long blue tail like img
-  "#33a852": { tailTaper: 0.18, tailLen: 1.7 },
+  "#12a9e9": { tailTaper: 0.10, tailLen: 2.5, tailCurve: 0.13 },
+  "#33a852": { tailTaper: 0.18, tailLen: 1.7, tailCurve: 0.15 }, // strong curve for green
   "#a633ea": { tailTaper: 0.15, tailLen: 1.4 },
   "#fac03c": { tailTaper: 0.18, tailLen: 1.4 },
   "#fd3577": { tailTaper: 0.18, tailLen: 1.5 },
@@ -63,41 +62,26 @@ const SnakeOverlay = () => {
       C ${mid1.x} ${mid1.y} ${mid2.x} ${mid2.y} ${tail.x} ${tail.y}
     `;
 
-    // SHARPLY EXTENDED, THIN TAIL (after normal endpoint)
-    // tA = 1.0 (tail tile), tB = 1.0 + tailLen/bodyLen, and interpolate/taper
-    // We'll extend using the tangent at t=1 and fade thickness to nothing
+    // Curve tail: continue curve past tail endpoint for a rounder tip, do not use polygon "point".
+    const tailCurveT = 1.06; // slight extension along curve, not a sharp line
+    const tailEndX = cubicBezier(head.x, mid1.x, mid2.x, tail.x, tailCurveT);
+    const tailEndY = cubicBezier(head.y, mid1.y, mid2.y, tail.y, tailCurveT);
 
-    const sharpTailT = 0.96;
-    const nearTailX = cubicBezier(head.x, mid1.x, mid2.x, tail.x, sharpTailT);
-    const nearTailY = cubicBezier(head.y, mid1.y, mid2.y, tail.y, sharpTailT);
-    const tailDx = cubicBezierDeriv(head.x, mid1.x, mid2.x, tail.x, 1);
-    const tailDy = cubicBezierDeriv(head.y, mid1.y, mid2.y, tail.y, 1);
-    const norm = Math.sqrt(tailDx * tailDx + tailDy * tailDy);
+    // At the actual tail, it's narrower, so draw a circle/ellipse for round tip
+    const tailTipRad = thickness * (tailStyle.tailTaper ?? 0.13) * 1.4;
 
-    // Length/shape for extension
-    const extLen = thickness * 3.4 * (tailStyle.tailLen || 1.4);
-    const tailTaper = tailStyle.tailTaper; // 0.1 = ultra-thin end
-
-    const tailTipX = tail.x + (tailDx / norm) * extLen;
-    const tailTipY = tail.y + (tailDy / norm) * extLen;
-
-    // Body details: add ellipse "bands" like sample image
-    // (optional: only for certain colors, e.g. green, purple, blue)
-
-    // Stripes: Use color/positions like green image (bands, offset each segment)
+    // Stripes logic is unchanged (still overlays, banded ellipses)
     const bandColors = {
-      "#33a852": "#1d8842",
-      "#12a9e9": "#27d8e5",
-      "#a633ea": "#ff3dcd", // magenta spots for purple
+      "#33a852": "#11953c",
+      "#12a9e9": "#48ffe1",
+      "#a633ea": "#ef40cd",
       "#fac03c": "#f9b134",
       "#fd3577": "#cc2557",
     };
     const hasBands = color === "#33a852" || color === "#12a9e9" || color === "#a633ea";
 
-    // Poly tail
-    const tailBase1X = tail.x - (thickness*tailTaper), tailBase1Y = tail.y - (thickness*tailTaper*0.25);
-    const tailBase2X = tail.x + (thickness*tailTaper), tailBase2Y = tail.y + (thickness*tailTaper*0.25);
-
+    // Instead of a polygon (pointy tail), use a round tip:
+    // Draw a short thick segment from tail to tailEnd, then draw a round ellipse at tailEnd
     return (
       <g key={`snake${i}`}>
         {/* Body shadow */}
@@ -121,8 +105,7 @@ const SnakeOverlay = () => {
         />
         {/* Body bands/stripes/dots */}
         {hasBands && Array.from({ length: 7 }).map((_, bandIdx) => {
-          const t = 0.12 + 0.72 * (bandIdx / 6); // Spread along length
-          // Offset slightly by band for more organic effect
+          const t = 0.12 + 0.72 * (bandIdx / 6);
           const x = cubicBezier(head.x, mid1.x, mid2.x, tail.x, t);
           const y = cubicBezier(head.y, mid1.y, mid2.y, tail.y, t);
           let rx = thickness*0.28, ry = thickness*0.13;
@@ -137,9 +120,9 @@ const SnakeOverlay = () => {
               rx={rx}
               ry={ry}
               fill={bandColors[color] || "#999"}
-              fillOpacity={ color === "#a633ea" ? 0.32 : 0.4 }
+              fillOpacity={ color === "#a633ea" ? 0.26 : 0.32 }
               stroke="none"
-              opacity={0.86}
+              opacity={0.82}
               transform={`rotate(${(bandIdx%2)*24 - 10},${x},${y})`}
             />
           );
@@ -148,26 +131,35 @@ const SnakeOverlay = () => {
         <path
           d={bodyPath}
           stroke="#fff6"
-          strokeWidth={thickness*0.21}
+          strokeWidth={thickness*0.18}
           fill="none"
           strokeLinecap="round"
           style={{
             filter: color === "#33a852" ? "blur(0.5px)" : "",
-            opacity: 0.7,
+            opacity: 0.55,
             mixBlendMode: "screen"
           }}
         />
         {/* Snake head */}
         <SnakeHead x={head.x} y={head.y} angle={angle} color={color} tileSize={TILE_SIZE} />
-        {/* SHARP, LONG, TAPERED TAIL (SVG polygon, ultra-thin per image) */}
-        <polygon
-          points={`
-            ${tailBase1X},${tailBase1Y}
-            ${tailBase2X},${tailBase2Y}
-            ${tailTipX},${tailTipY}
+        {/* CURVED, ROUND TIP TAIL (no pointy polygon!) */}
+        <path
+          d={`
+            M ${tail.x} ${tail.y}
+            L ${tailEndX} ${tailEndY}
           `}
+          stroke={color}
+          strokeWidth={thickness * tailStyle.tailTaper}
+          fill="none"
+          strokeLinecap="round"
+        />
+        <ellipse
+          cx={tailEndX}
+          cy={tailEndY}
+          rx={tailTipRad * 0.8}
+          ry={tailTipRad * 1.08}
           fill={color}
-          opacity={0.89}
+          opacity={0.91}
         />
       </g>
     );
