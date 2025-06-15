@@ -1,4 +1,3 @@
-
 interface BoardTileProps {
   tileNumber: number;
   hasPlayer1: boolean;
@@ -37,7 +36,7 @@ const BoardTile = ({
     return 'text-gray-800';
   };
 
-  // Special emotional milestone tiles
+  // Special emotional milestone tiles (now just a marker, visuals removed)
   const isSpecialTile = [5, 58, 87, 93].includes(tileNumber);
   
   return (
@@ -73,12 +72,7 @@ const BoardTile = ({
         {tileNumber}
       </span>
       
-      {/* Special milestone hearts for key emotional tiles */}
-      {isSpecialTile && (
-        <div className="absolute -top-1 -right-1 text-xs z-20">
-          💖
-        </div>
-      )}
+      {/* Hearts have been removed as requested */}
       
       {/* Player indicators with romantic styling */}
       {hasPlayer1 && (
