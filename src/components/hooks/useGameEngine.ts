@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useSpecialTiles } from "./useSpecialTiles";
+import { useGameEngineHelpers } from "./gameEngineHelpers";
 
 export interface GameState {
   player1Position: number;
@@ -32,20 +34,18 @@ export const useGameEngine = (gameData: any) => {
       winner: null,
     };
   });
-  // FIX: Make sure isRolling only goes true briefly after dice pressed!
   const [isRolling, setIsRolling] = useState(false);
 
-  // Multiplayer setup
-  const isMultiplayer = gameData.isMultiplayer || false;
-  const currentPlayerId = gameData.currentPlayerId || 'player1';
+  const { getSpecialTiles, rollDiceAndMove, handleNewGame, handleTileClick, isMultiplayer, currentPlayerId } = useGameEngineHelpers(gameData, gameState, setGameState);
 
+  // Sync external game state
   useEffect(() => {
     if (gameData.gameState) {
       setGameState(gameData.gameState);
     }
   }, [gameData.gameState]);
 
-  // Check if both players are present and game should start
+  // Multiplayer: start game when both players present
   useEffect(() => {
     if (
       isMultiplayer &&
@@ -66,10 +66,7 @@ export const useGameEngine = (gameData: any) => {
     // eslint-disable-next-line
   }, [gameData.player1Nickname, gameData.player2Nickname, gameState.gameStarted, isMultiplayer]);
 
-  // Use shared hook for snakes/ladders config!
-  const { snakes, ladders } = useSpecialTiles();
-
-  // --- Debugging logs
+  // --- Debug logs
   useEffect(() => {
     console.log("Current gameState:", gameState);
   }, [gameState]);
@@ -78,187 +75,23 @@ export const useGameEngine = (gameData: any) => {
   }, [isRolling]);
   // ---
 
-  /**
-   * Animates player token sliding from snake head → tail.
-   * Returns a sequence of {x, y} points (20 steps) along the snake body for animation.
-   * If not a snake tile or not sliding, returns null.
-   */
-  const getSnakeBodyPath = (fromPos: number, toPos: number) => {
-    // Corresponds to positions used in SnakeOverlay
-    // Import SNAKE_PATHS from SnakeOverlay
-    try {
-      // Dynamically import SNAKE_PATHS to avoid cyclic imports
-      // @ts-ignore
-      const overlay = require('../SnakeOverlay');
-      const SNAKE_PATHS = overlay.SNAKE_PATHS || [];
-      for (const sn of SNAKE_PATHS) {
-        // Match by tail and head tile center XY
-        // But since head/tail tile can overlap (with offset), allow a bit of XY deviation
-        const head = sn.head, tail = sn.tail;
-        function tileMatch(txy: {x:number;y:number}, pos:number) {
-          // find closest tile center to this XY
-          const {tileToXY} = require('../../utils/snakeMath');
-          const cxy = tileToXY(pos);
-          return Math.abs(cxy.x-txy.x) < 18 && Math.abs(cxy.y-txy.y) < 18;
-        }
-        if (tileMatch(head, fromPos) && tileMatch(tail, toPos)) {
-          // Interpolate Bezier for 20 steps
-          const pts = [];
-          for (let t = 0; t <= 1; t += 0.05) {
-            const x = require('../../utils/snakeMath').cubicBezier(
-              sn.head.x, sn.mid1.x, sn.mid2.x, sn.tail.x, t
-            );
-            const y = require('../../utils/snakeMath').cubicBezier(
-              sn.head.y, sn.mid1.y, sn.mid2.y, sn.tail.y, t
-            );
-            pts.push({x, y});
-          }
-          return pts;
-        }
-      }
-    } catch {}
-    return null;
-  };
-
-  const rollDiceAndMove = async ({
-    onQuestionTriggered,
-    onReaction,
-    toast,
-  }) => {
-    if (isRolling || gameState.gameEnded || !gameState.gameStarted) {
-      console.log("Blocked dice roll: isRolling", isRolling, "gameEnded", gameState.gameEnded, "gameStarted", gameState.gameStarted);
-      return;
-    }
-    if (isMultiplayer && gameState.currentTurn !== currentPlayerId) {
-      console.log("Blocked: Not this player's turn.", { currentPlayerId, currentTurn: gameState.currentTurn });
-      return;
-    }
-
-    setIsRolling(true);
-
-    // Simulate dice roll animation
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const roll = Math.floor(Math.random() * 6) + 1;
-    const newGameState = { ...gameState, lastDiceRoll: roll };
-
-    // Move player
-    const currentPlayer = gameState.currentTurn;
-    const currentPosition =
-      currentPlayer === 'player1'
-        ? gameState.player1Position
-        : gameState.player2Position;
-    let newPosition = Math.min(100, currentPosition + roll);
-
-    // --- log dice and positions
-    console.log("Dice rolled:", roll, "by", currentPlayer, "oldPos", currentPosition, "newPos", newPosition);
-
-    // Handle special tiles, now using destructured snakes/ladders
-    if (snakes[newPosition]) {
-      const snakeTail = snakes[newPosition];
-      const snakePath = getSnakeBodyPath(newPosition, snakeTail);
-      if (snakePath && snakePath.length > 0) {
-        setGameState(gs => ({
-          ...gs,
-          sliding: {
-            path: snakePath,
-            player: currentPlayer,
-          }
-        }));
-        await new Promise(res => setTimeout(res, 2000));
-        newPosition = snakeTail;
-        if (onReaction) onReaction('snake');
-      } else {
-        newPosition = snakeTail;
-        if (onReaction) onReaction('snake');
-      }
-    } else if (ladders[newPosition]) {
-      newPosition = ladders[newPosition];
-      if (onReaction) onReaction('ladder');
-    }
-
-    // --- log after snake/ladder
-    console.log("Moved to:", newPosition);
-
-    // Update position
-    if (currentPlayer === 'player1') {
-      newGameState.player1Position = newPosition;
-    } else {
-      newGameState.player2Position = newPosition;
-    }
-    newGameState.sliding = undefined;
-
-    // Check for win condition
-    if (newPosition === 100) {
-      newGameState.gameEnded = true;
-      newGameState.winner = currentPlayer;
-      toast &&
-        toast({
-          title: '🎉 Congratulations!',
-          description:
-            (currentPlayer === 'player1'
-              ? gameData.player1Nickname || 'Player 1'
-              : gameData.player2Nickname || 'Player 2') + ' wins!',
-        });
-    } else {
-      // Check for question triggers
-      const questionTiles = [10, 20, 30, 40, 50, 60, 70, 80, 90];
-      if (
-        questionTiles.includes(newPosition) &&
-        !gameState.questionsTriggered.includes(newPosition)
-      ) {
-        onQuestionTriggered && onQuestionTriggered('', newPosition);
-        newGameState.questionsTriggered = [
-          ...gameState.questionsTriggered,
-          newPosition,
-        ];
-      }
-      // Switch turns
-      newGameState.currentTurn =
-        currentPlayer === 'player1' ? 'player2' : 'player1';
-    }
-
-    setGameState(newGameState);
-
-    if (isMultiplayer && gameData.onGameStateUpdate) {
-      await gameData.onGameStateUpdate(newGameState);
-    }
-
-    setIsRolling(false);
-  };
-
-  const handleNewGame = () => {
-    if (isMultiplayer) return;
-    setGameState({
-      player1Position: 0,
-      player2Position: 0,
-      currentTurn: 'player1',
-      lastDiceRoll: 1,
-      questionsTriggered: [],
-      gameStarted: true,
-      gameEnded: false,
-      winner: null,
-      sliding: undefined,
+  // Wrap rollDiceAndMove with isRolling tracking
+  const rollDiceAndMoveWithState = async (args: any) => {
+    await rollDiceAndMove({
+      ...args,
+      isRolling,
+      setIsRolling,
     });
-  };
-
-  const handleTileClick = (position: number, toast?: (args: any) => void) => {
-    if (!gameState.gameEnded) return;
-    toast &&
-      toast({
-        title: 'Tile Info',
-        description: `Tile ${position}`,
-      });
   };
 
   return {
     gameState,
     setGameState,
     isRolling,
-    rollDiceAndMove,
+    rollDiceAndMove: rollDiceAndMoveWithState,
     handleNewGame,
     handleTileClick,
-    getSpecialTiles: () => ({ snakes, ladders }),
+    getSpecialTiles,
     isMultiplayer,
     currentPlayerId,
   };
