@@ -69,6 +69,15 @@ export const useGameEngine = (gameData: any) => {
   // Use shared hook for snakes/ladders config!
   const { snakes, ladders } = useSpecialTiles();
 
+  // --- Debugging logs
+  useEffect(() => {
+    console.log("Current gameState:", gameState);
+  }, [gameState]);
+  useEffect(() => {
+    console.log("Is rolling?", isRolling);
+  }, [isRolling]);
+  // ---
+
   /**
    * Animates player token sliding from snake head → tail.
    * Returns a sequence of {x, y} points (20 steps) along the snake body for animation.
@@ -115,13 +124,15 @@ export const useGameEngine = (gameData: any) => {
     onQuestionTriggered,
     onReaction,
     toast,
-  }: {
-    onQuestionTriggered?: (question: string, position: number) => void;
-    onReaction?: (type: 'snake' | 'ladder') => void;
-    toast?: (args: any) => void;
   }) => {
-    if (isRolling || gameState.gameEnded || !gameState.gameStarted) return;
-    if (isMultiplayer && gameState.currentTurn !== currentPlayerId) return;
+    if (isRolling || gameState.gameEnded || !gameState.gameStarted) {
+      console.log("Blocked dice roll: isRolling", isRolling, "gameEnded", gameState.gameEnded, "gameStarted", gameState.gameStarted);
+      return;
+    }
+    if (isMultiplayer && gameState.currentTurn !== currentPlayerId) {
+      console.log("Blocked: Not this player's turn.", { currentPlayerId, currentTurn: gameState.currentTurn });
+      return;
+    }
 
     setIsRolling(true);
 
@@ -129,7 +140,7 @@ export const useGameEngine = (gameData: any) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const roll = Math.floor(Math.random() * 6) + 1;
-    const newGameState: GameState = { ...gameState, lastDiceRoll: roll };
+    const newGameState = { ...gameState, lastDiceRoll: roll };
 
     // Move player
     const currentPlayer = gameState.currentTurn;
@@ -138,6 +149,9 @@ export const useGameEngine = (gameData: any) => {
         ? gameState.player1Position
         : gameState.player2Position;
     let newPosition = Math.min(100, currentPosition + roll);
+
+    // --- log dice and positions
+    console.log("Dice rolled:", roll, "by", currentPlayer, "oldPos", currentPosition, "newPos", newPosition);
 
     // Handle special tiles, now using destructured snakes/ladders
     if (snakes[newPosition]) {
@@ -160,8 +174,11 @@ export const useGameEngine = (gameData: any) => {
       }
     } else if (ladders[newPosition]) {
       newPosition = ladders[newPosition];
-      onReaction && onReaction('ladder');
+      if (onReaction) onReaction('ladder');
     }
+
+    // --- log after snake/ladder
+    console.log("Moved to:", newPosition);
 
     // Update position
     if (currentPlayer === 'player1') {
@@ -169,7 +186,6 @@ export const useGameEngine = (gameData: any) => {
     } else {
       newGameState.player2Position = newPosition;
     }
-    // Sliding state should be cleared after move
     newGameState.sliding = undefined;
 
     // Check for win condition
