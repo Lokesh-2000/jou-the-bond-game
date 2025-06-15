@@ -2,7 +2,7 @@
 import React from "react";
 import { TILE_SIZE, tileToCorner } from "../utils/ladderMath";
 
-// Updated ladder positions (75-93 ➔ 76-84)
+// All ladders use same rung spacing, and ladder from 76→84 uses fewer rungs.
 const LADDERS = [
   { from: 5, to: 58 },
   { from: 9, to: 27 },
@@ -10,47 +10,62 @@ const LADDERS = [
   { from: 40, to: 64 },
   { from: 51, to: 73 },
   { from: 61, to: 81 },
-  { from: 76, to: 84 }, // changed here
+  { from: 76, to: 84 }, // Short ladder, use less rungs
 ];
 
 const LadderOverlay = () => {
   const wood = "#9B6830";
   const woodDark = "#5B3E16";
 
+  // Ladders uniformly spaced, both ends inside tiles
   function renderLadder({ from, to }: { from: number; to: number }, i: number) {
-    // Center of tile
-    const centerOffset = TILE_SIZE * 0.5;
+    // Offset for all ladders so ends well inside tiles:
+    const ladderInset = TILE_SIZE * 0.25; // move endpoints away from tile border
 
-    // Ladder endpoints: slightly above center at bottom, slightly below at top
-    // "bottom" is always min(from, to)
-    const isUp = to > from;
-    const startTile = isUp ? from : to;
-    const endTile = isUp ? to : from;
-    // Offset: bottom endpoint above center, top endpoint below center
-    const startCorner = tileToCorner(startTile, "bl");
-    const endCorner = tileToCorner(endTile, "tr");
-
-    const bottom = {
-      x: startCorner.x,
-      y: startCorner.y - TILE_SIZE * 0.12,
+    // Find base/tip corners (use tile centers for inside effect)
+    const n = (n: number) => n - 1;
+    const rowcol = (tileNum: number) => {
+      const row = Math.floor(n(tileNum) / 10);
+      let col = n(tileNum) % 10;
+      if (row % 2 === 1) col = 9 - col;
+      return { row, col };
     };
-    const top = {
-      x: endCorner.x,
-      y: endCorner.y + TILE_SIZE * 0.13,
+    const centerOfTile = (tileNum: number) => {
+      const { row, col } = rowcol(tileNum);
+      return {
+        x: col * TILE_SIZE + TILE_SIZE / 2,
+        y: (9 - row) * TILE_SIZE + TILE_SIZE / 2,
+      };
     };
-    // If ladder is reversed (rare), invert
-    const base = isUp ? bottom : top;
-    const tip = isUp ? top : bottom;
 
-    const dx = tip.x - base.x,
-      dy = tip.y - base.y;
+    const startPos = centerOfTile(from);
+    const endPos = centerOfTile(to);
+
+    // Move base/tip inside the tile by scaling the vector
+    const dx = endPos.x - startPos.x;
+    const dy = endPos.y - startPos.y;
     const len = Math.sqrt(dx * dx + dy * dy);
 
-    const width = TILE_SIZE * 0.46;  // thinner rails
-    const rungs = 16; // more rungs
+    // New endpoints inside the tiles using ladderInset
+    const base = {
+      x: startPos.x + (dx * ladderInset) / len,
+      y: startPos.y + (dy * ladderInset) / len,
+    };
+    const tip = {
+      x: endPos.x - (dx * ladderInset) / len,
+      y: endPos.y - (dy * ladderInset) / len,
+    };
+
+    // Recompute dx/dy/length for new endpoints
+    const ddx = tip.x - base.x, ddy = tip.y - base.y;
+    const dlen = Math.sqrt(ddx * ddx + ddy * ddy);
+
+    const width = TILE_SIZE * 0.46;
+    // Rungs: short ladders (like 76-84) = less, else all same and even spacing
+    const rungs = (from === 76 && to === 84) ? 7 : 12;
     const rungStep = 1 / (rungs - 1);
 
-    const perp = { x: -dy / len, y: dx / len };
+    const perp = { x: -ddy / dlen, y: ddx / dlen };
 
     const leftStart = {
       x: base.x + perp.x * width * 0.5,
@@ -69,7 +84,7 @@ const LadderOverlay = () => {
       y: tip.y - perp.y * width * 0.5,
     };
 
-    const shadowOffset = TILE_SIZE * 0.08;
+    const shadowOffset = TILE_SIZE * 0.06;
 
     return (
       <g key={`ladder${i}`}>
@@ -132,10 +147,10 @@ const LadderOverlay = () => {
           strokeWidth={TILE_SIZE * 0.02}
           strokeLinecap="round"
         />
-        {/* Ladder rungs */}
+        {/* Ladder rungs: Evenly spaced between base and tip */}
         {Array.from({ length: rungs }).map((_, idx) => {
-          const px = base.x + dx * rungStep * idx;
-          const py = base.y + dy * rungStep * idx;
+          const px = base.x + ddx * rungStep * idx;
+          const py = base.y + ddy * rungStep * idx;
           const rungHalf = {
             x: perp.x * (width * 0.38),
             y: perp.y * (width * 0.38),
@@ -179,3 +194,4 @@ const LadderOverlay = () => {
 };
 
 export default LadderOverlay;
+

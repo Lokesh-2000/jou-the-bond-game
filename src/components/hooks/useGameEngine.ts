@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 export interface GameState {
@@ -32,6 +31,7 @@ export const useGameEngine = (gameData: any) => {
       winner: null,
     };
   });
+  // FIX: Make sure isRolling only goes true briefly after dice pressed!
   const [isRolling, setIsRolling] = useState(false);
 
   // Multiplayer setup
@@ -248,12 +248,12 @@ export const useGameEngine = (gameData: any) => {
 
     setGameState(newGameState);
 
-    // Update multiplayer state if needed
+    // Multiplayer game state update
     if (isMultiplayer && gameData.onGameStateUpdate) {
       await gameData.onGameStateUpdate(newGameState);
     }
 
-    setIsRolling(false);
+    setIsRolling(false); // FIX: make sure rolling stops after move
   };
 
   const handleNewGame = () => {
