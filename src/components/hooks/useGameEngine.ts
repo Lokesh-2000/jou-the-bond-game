@@ -98,8 +98,8 @@ export const useGameEngine = (gameData: any) => {
       33: 87,
       36: 44,
       40: 64,
+      // 51: 67, // <-- removed duplicate and kept only one 51 entry below
       51: 73,
-      51: 67,
       61: 81,
       71: 91,
       76: 84,
