@@ -59,14 +59,21 @@ export const sessionManager = {
   async joinSession(sessionId: string, player2Nickname: string): Promise<Session | null> {
     const player2Id = Math.random().toString(36).substring(2, 15);
 
-    // First, fetch the current session for debugging and check slot.
+    console.log("=== JOIN SESSION DEBUG START ===");
+    console.log("Attempting to join session:", sessionId);
+    console.log("Player 2 nickname:", player2Nickname);
+    console.log("Generated player 2 ID:", player2Id);
+
+    // First, fetch the current session to check availability
     const { data: session, error: fetchError } = await supabase
       .from('sessions')
       .select('*')
       .eq('session_id', sessionId)
       .maybeSingle();
 
-    console.log("Attempting to join session:", sessionId, "Fetched session:", session);
+    console.log("Fetch session result:");
+    console.log("- Session data:", session);
+    console.log("- Fetch error:", fetchError);
 
     if (fetchError) {
       console.error("Error fetching session for join:", fetchError);
@@ -75,39 +82,50 @@ export const sessionManager = {
 
     // Room not found
     if (!session) {
+      console.log("Session not found");
       throw new Error("Unable to join: This room does not exist.");
     }
 
-    // Restrict join only if player2_id is already set (and not empty/falsy)
-    if (session.player2_id && session.player2_id !== null && session.player2_id !== "") {
+    console.log("Session found, checking player2_id:");
+    console.log("- player2_id value:", session.player2_id);
+    console.log("- player2_id type:", typeof session.player2_id);
+    console.log("- Is null?", session.player2_id === null);
+    console.log("- Is empty string?", session.player2_id === "");
+
+    // Check if room is already full
+    if (session.player2_id !== null && session.player2_id !== "") {
+      console.log("Room is full, player2_id already set to:", session.player2_id);
       throw new Error("Unable to join: This room already has two players.");
     }
 
-    // Update the session to join as player2
+    console.log("Room is available, attempting to join...");
+
+    // Update the session to join as player2 using proper null check
     const { data, error } = await supabase
       .from('sessions')
       .update({ player2_id: player2Id, player2_nickname: player2Nickname })
       .eq('session_id', sessionId)
-      // Loosen up: allow join if player2_id is null or empty string (for legacy data)
-      .in('player2_id', [null, ''])
+      .is('player2_id', null) // Use proper null check instead of .in()
       .select()
       .maybeSingle();
 
+    console.log("Update session result:");
+    console.log("- Updated data:", data);
+    console.log("- Update error:", error);
+
     if (error) {
-      console.error("Error joining session:", error);
+      console.error("Error updating session:", error);
       throw error;
     }
 
-    // If still no data returned, something's wrong
+    // If no data returned, the update failed (likely room was taken by another player)
     if (!data) {
-      console.error(
-        "Unable to join session: update failed, room might be taken, or another bug. Session before update:",
-        session
-      );
-      throw new Error(
-        "Unable to join: This room does not exist or already has two players (please ask host for a new code)."
-      );
+      console.log("Update failed - no data returned, room likely taken by another player");
+      throw new Error("Unable to join: This room has been taken by another player. Please try again or ask for a new room code.");
     }
+
+    console.log("Successfully joined session!");
+    console.log("=== JOIN SESSION DEBUG END ===");
 
     return data;
   },
