@@ -10,6 +10,10 @@ export interface GameState {
   gameStarted: boolean;
   gameEnded: boolean;
   winner: string | null;
+  sliding?: {
+    path: { x: number; y: number; }[];
+    player: 'player1' | 'player2';
+  }
 }
 
 export const useGameEngine = (gameData: any) => {
@@ -66,12 +70,56 @@ export const useGameEngine = (gameData: any) => {
     snakes: {
       16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60,
       87: 24, 93: 73, 95: 75, 98: 78,
+      38: 15, 53: 31, 29: 8, 92: 70, 94: 6, 97: 78, 82: 65, 86: 54, 88: 24, // add overlay snakes
     },
     ladders: {
       1: 38, 4: 14, 9: 21, 21: 42, 28: 84, 36: 44, 51: 67,
-      71: 91, 80: 100,
+      71: 91, 80: 100, 5: 58, 9: 27, 33: 87, 40: 64, 51: 73, 61: 81,
+      76: 84,
     },
   });
+
+  /**
+   * Animates player token sliding from snake head → tail.
+   * Returns a sequence of {x, y} points (20 steps) along the snake body for animation.
+   * If not a snake tile or not sliding, returns null.
+   */
+  const getSnakeBodyPath = (fromPos: number, toPos: number) => {
+    // Corresponds to positions used in SnakeOverlay
+    // Import SNAKE_PATHS from SnakeOverlay
+    try {
+      // Dynamically import SNAKE_PATHS to avoid cyclic imports
+      // @ts-ignore
+      const overlay = require('../SnakeOverlay');
+      const SNAKE_PATHS = overlay.SNAKE_PATHS || [];
+      for (const sn of SNAKE_PATHS) {
+        // Match by tail and head tile center XY
+        // But since head/tail tile can overlap (with offset), allow a bit of XY deviation
+        const head = sn.head, tail = sn.tail;
+        function tileMatch(txy: {x:number;y:number}, pos:number) {
+          // find closest tile center to this XY
+          const {tileToXY} = require('../../utils/snakeMath');
+          const cxy = tileToXY(pos);
+          return Math.abs(cxy.x-txy.x) < 18 && Math.abs(cxy.y-txy.y) < 18;
+        }
+        if (tileMatch(head, fromPos) && tileMatch(tail, toPos)) {
+          // Interpolate Bezier for 20 steps
+          const pts = [];
+          for (let t = 0; t <= 1; t += 0.05) {
+            const x = require('../../utils/snakeMath').cubicBezier(
+              sn.head.x, sn.mid1.x, sn.mid2.x, sn.tail.x, t
+            );
+            const y = require('../../utils/snakeMath').cubicBezier(
+              sn.head.y, sn.mid1.y, sn.mid2.y, sn.tail.y, t
+            );
+            pts.push({x, y});
+          }
+          return pts;
+        }
+      }
+    } catch {}
+    return null;
+  };
 
   const rollDiceAndMove = async ({
     onQuestionTriggered,
@@ -104,9 +152,28 @@ export const useGameEngine = (gameData: any) => {
     // Handle special tiles
     const { snakes, ladders } = getSpecialTiles();
 
+    // Snake slide animation: if bitten by a snake, animate token
     if (snakes[newPosition]) {
-      newPosition = snakes[newPosition];
-      onReaction && onReaction('snake');
+      const snakeTail = snakes[newPosition];
+      const snakePath = getSnakeBodyPath(newPosition, snakeTail);
+      if (snakePath && snakePath.length > 0) {
+        // Set sliding state, prevent further moves
+        setGameState(gs => ({
+          ...gs,
+          sliding: {
+            path: snakePath,
+            player: currentPlayer,
+          }
+        }));
+        // Let other moves halt
+        await new Promise(res => setTimeout(res, 2000));
+        // After 2s slide, actually move the player
+        newPosition = snakeTail;
+        if (onReaction) onReaction('snake');
+      } else {
+        newPosition = snakeTail;
+        if (onReaction) onReaction('snake');
+      }
     } else if (ladders[newPosition]) {
       newPosition = ladders[newPosition];
       onReaction && onReaction('ladder');
@@ -118,6 +185,8 @@ export const useGameEngine = (gameData: any) => {
     } else {
       newGameState.player2Position = newPosition;
     }
+    // Sliding state should be cleared after move
+    newGameState.sliding = undefined;
 
     // Check for win condition
     if (newPosition === 100) {
@@ -127,9 +196,9 @@ export const useGameEngine = (gameData: any) => {
         toast({
           title: '🎉 Congratulations!',
           description:
-            currentPlayer === 'player1'
-              ? gameData.player1Nickname || 'Player 1' + ' wins!'
-              : gameData.player2Nickname || 'Player 2' + ' wins!',
+            (currentPlayer === 'player1'
+              ? gameData.player1Nickname || 'Player 1'
+              : gameData.player2Nickname || 'Player 2') + ' wins!',
         });
     } else {
       // Check for question triggers
@@ -170,6 +239,7 @@ export const useGameEngine = (gameData: any) => {
       gameStarted: true,
       gameEnded: false,
       winner: null,
+      sliding: undefined,
     });
   };
 

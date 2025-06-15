@@ -92,6 +92,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               player1Position={gameState.player1Position}
               player2Position={gameState.player2Position}
               onTileClick={(pos) => handleTileClick(pos, toast)}
+              sliding={gameState.sliding}
             />
           </div>
 
