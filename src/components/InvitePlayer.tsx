@@ -64,22 +64,23 @@ const InvitePlayer = ({ onComplete, gameData }: InvitePlayerProps) => {
 
     setIsCreating(true);
     try {
-      const sessionId = await sessionManager.createSession(gameData, nickname.trim());
-      setRoomCode(sessionId);
-      
+      const session = await sessionManager.createSession(gameData, nickname.trim());
+      if (!session) throw new Error("Session creation failed");
+      setRoomCode(session.session_id);
+
       toast({
         title: "Session Created!",
         description: "Share the room code with your partner to start playing",
       });
-      
+
       // Start listening for when player 2 joins
-      sessionManager.subscribeToSession(sessionId, (session) => {
-        if (session.game_state.game_started && session.player2_id) {
+      sessionManager.subscribeToSession(session.session_id, (sessionObj) => {
+        if (sessionObj && sessionObj.game_state && sessionObj.game_state.game_started && sessionObj.player2_id) {
           // Both players are ready, start the game
-          onComplete(sessionId);
+          onComplete(sessionObj.session_id);
         }
       });
-      
+
     } catch (error) {
       console.error('Error creating session:', error);
       toast({

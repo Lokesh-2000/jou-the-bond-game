@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Define types for the data we'll be storing in the session
@@ -13,8 +14,9 @@ export interface Session {
   game_state: any | null;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Use hardcoded Supabase credentials as required by Lovable
+const supabaseUrl = "https://kqpuxmlvjrbiuhkniwvd.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxcHV4bWx2anJiaXVoa25pd3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NTM4NzYsImV4cCI6MjA2NTIyOTg3Nn0.Qi6DWEQiI7bKwB6CGHWiGYPHB645bpyvdltMWkVonD4";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -25,7 +27,10 @@ const generateSessionId = (): string => {
 
 // Session management functions
 export const sessionManager = {
-  async createSession(player1Nickname: string, setupData: any): Promise<Session> {
+  async createSession(
+    gameData: any,    // fixed: accept gameData as first arg, nickname as second arg for InvitePlayer
+    player1Nickname: string
+  ): Promise<Session> {
     const sessionId = generateSessionId();
     const player1Id = Math.random().toString(36).substring(2, 15);
 
@@ -36,9 +41,9 @@ export const sessionManager = {
           session_id: sessionId,
           player1_id: player1Id,
           player1_nickname: player1Nickname,
-          relationship_type: setupData.relationshipType,
-          conversation_styles: setupData.conversationStyles,
-          custom_question: setupData.customQuestion,
+          relationship_type: gameData.relationshipType,
+          conversation_styles: gameData.conversationStyles,
+          custom_question: gameData.customQuestion,
         },
       ])
       .select()

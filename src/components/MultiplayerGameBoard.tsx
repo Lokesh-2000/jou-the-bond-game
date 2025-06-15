@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { sessionManager, Session, GameState } from '@/utils/sessionManager';
+import { sessionManager, Session } from '@/utils/sessionManager';
+import { GameState } from './hooks/useGameEngine';
 import GameBoard from './GameBoard';
 
 interface MultiplayerGameBoardProps {
@@ -78,7 +79,7 @@ const MultiplayerGameBoard = ({
     }));
 
     // Show toast for game events
-    if (updatedSession.game_state.game_ended && updatedSession.game_state.winner) {
+    if (updatedSession.game_state?.game_ended && updatedSession.game_state?.winner) {
       const isWinner = (isPlayer2 && updatedSession.game_state.winner === 'player2') ||
                       (!isPlayer2 && updatedSession.game_state.winner === 'player1');
       

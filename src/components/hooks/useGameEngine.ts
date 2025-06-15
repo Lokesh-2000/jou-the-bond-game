@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSpecialTiles } from "./useSpecialTiles";
 import { useGameEngineHelpers } from "./gameEngineHelpers";
@@ -14,7 +15,10 @@ export interface GameState {
   sliding?: {
     path: { x: number; y: number; }[];
     player: 'player1' | 'player2';
-  }
+  };
+  // --- ADDED FIELDS ---
+  lastQuestionAsked?: string | null;
+  lastQuestionAnswer?: string | null;
 }
 
 export const useGameEngine = (gameData: any) => {
@@ -31,6 +35,8 @@ export const useGameEngine = (gameData: any) => {
       gameStarted: gameData.isMultiplayer ? false : true,
       gameEnded: false,
       winner: null,
+      lastQuestionAsked: null,
+      lastQuestionAnswer: null,
     };
   });
   const [isRolling, setIsRolling] = useState(false);
