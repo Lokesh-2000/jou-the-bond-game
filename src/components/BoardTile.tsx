@@ -1,4 +1,6 @@
+
 import React from "react";
+import Pawn from "./Pawn";
 
 interface BoardTileProps {
   tileNumber: number;
@@ -27,7 +29,6 @@ const BoardTile = ({
   // Checkerboard pattern
   const getTileColor = () => {
     const even = (row + col) % 2 === 0;
-    // bg-[#EDEDED] darkened by ~20% -> #bfbfbf
     return even ? "bg-[#bfbfbf]" : "bg-[#FFD5E5]";
   };
 
@@ -37,6 +38,10 @@ const BoardTile = ({
     if (tileNumber === FINISH_TILE) return "text-rose-600";
     return "text-gray-800";
   };
+
+  // Chess pawn size: 65% of tile (tile ~80px, pawn ~52px)
+  const pawnSize = 0.65 * 80; // ignore sm:w override for now (grid always min 80px)
+  const pawnOffset = -(pawnSize / 2);
 
   return (
     <div
@@ -52,6 +57,7 @@ const BoardTile = ({
         gridColumn: col + 1,
         borderRadius: "0.33rem",
         boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+        overflow: "visible"
       }}
     >
       {/* Centered Number */}
@@ -81,33 +87,38 @@ const BoardTile = ({
           FINISH
         </span>
       )}
-      {/* Players as chess pawns */}
+      {/* Player 1 Chess Pawn */}
       {hasPlayer1 && (
         <span
-          className={`
-            absolute -top-3 -left-1 text-2xl
-            text-purple-600 drop-shadow font-black select-none z-30
-            animate-[bounce_0.8s_1]
-          `}
           style={{
-            textShadow: "0 1px 3px #fff, 1px 1px 2px #0002",
+            position: "absolute",
+            left: "50%",
+            top: "49%",
+            transform: `translate(-60%, -53%)`,
+            zIndex: 30,
+            width: pawnSize,
+            height: pawnSize,
+            pointerEvents: "none",
           }}
         >
-          ♟️
+          <Pawn color="#a259f7" size={pawnSize} />
         </span>
       )}
+      {/* Player 2 Chess Pawn */}
       {hasPlayer2 && (
         <span
-          className={`
-            absolute -top-3 -right-1 text-2xl
-            text-pink-600 drop-shadow font-black select-none z-30
-            animate-[bounce_0.8s_1]
-          `}
           style={{
-            textShadow: "0 1px 3px #fff, 1px 1px 2px #0002",
+            position: "absolute",
+            left: "50%",
+            top: "49%",
+            transform: `translate(-40%, -53%)`,
+            zIndex: 30,
+            width: pawnSize,
+            height: pawnSize,
+            pointerEvents: "none",
           }}
         >
-          ♟️
+          <Pawn color="#ff62a3" size={pawnSize} />
         </span>
       )}
     </div>

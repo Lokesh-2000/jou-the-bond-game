@@ -1,8 +1,8 @@
+
 import { useToast } from "@/hooks/use-toast";
 import GameBoardGrid from './GameBoardGrid';
 import PlayerInfo from './PlayerInfo';
 import GameControls from './GameControls';
-import GameStatus from './GameStatus';
 import QuestionModal from './QuestionModal';
 import ReactionModal from './ReactionModal';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -61,10 +61,16 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
     );
   }
 
-  // Determine chat context (only show chat if there's a sessionId/roomCode and multiplayer)
+  // Only allow dice roll if: no win & not rolling & this player's turn
+  const isTurn =
+    !gameState.gameEnded &&
+    !isRolling &&
+    ((isMultiplayer && currentPlayerId === gameState.currentTurn) || !isMultiplayer);
+
+  // Show chat only if multiplayer and has a session id
   const showChat = !!gameData.sessionId || !!roomCode;
 
-  // Wraps the dice&move logic with UI side effects for questions and reactions
+  // Enhanced: snake triggers question popup always
   const handleRollDice = async () => {
     await rollDiceAndMove({
       onQuestionTriggered: (_, pos) => {
@@ -79,6 +85,9 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
         setShowReaction(true);
       },
       toast,
+      onSnake: () => {
+        setCurrentQuestion(getRandomQuestion());
+      }
     });
   };
 
@@ -89,7 +98,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Game Board */}
+          {/* Game Board and Chat */}
           <div className="lg:col-span-2 space-y-6">
             <GameBoardGrid
               player1Position={gameState.player1Position}
@@ -98,7 +107,7 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               sliding={gameState.sliding}
             />
 
-            {/* Show chat below board IF multiplayer and sessionId */}
+            {/* Chat replaces room code info */}
             {showChat && (
               <Chat
                 sessionId={gameData.sessionId || roomCode}
@@ -130,11 +139,10 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               isMultiplayer={isMultiplayer}
               currentPlayerId={currentPlayerId}
               isWaitingForOtherPlayer={isRolling}
+              isTurn={isTurn}
             />
+            {/* Room code removed! No GameStatus */}
 
-            <GameStatus
-              roomCode={roomCode}
-            />
           </div>
         </div>
       </div>

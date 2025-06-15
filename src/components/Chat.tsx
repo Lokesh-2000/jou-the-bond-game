@@ -18,8 +18,17 @@ const Chat = ({ sessionId, nickname, sender }: ChatProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    // Log for debugging chat delivery/session
+    console.log("Chat mounted: sessionId", sessionId, "sender", sender);
+  }, [sessionId, sender]);
+
+  useEffect(() => {
+    // Scroll down only if already at (or near) bottom
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    if (isAtBottom) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
 
@@ -44,7 +53,7 @@ const Chat = ({ sessionId, nickname, sender }: ChatProps) => {
       </div>
       <div
         ref={scrollRef}
-        className="h-60 max-h-72 overflow-y-auto px-4 py-2 flex flex-col gap-2 border-b border-b-gray-200"
+        className="h-72 max-h-96 overflow-y-auto px-4 py-2 flex flex-col gap-2 border-b border-b-gray-200"
         style={{ background: "white", borderRadius: "0 0 1rem 1rem" }}
       >
         {loading ? (

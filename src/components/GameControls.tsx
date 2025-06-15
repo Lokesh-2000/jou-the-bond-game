@@ -14,6 +14,7 @@ interface GameControlsProps {
   isMultiplayer?: boolean;
   currentPlayerId?: string;
   isWaitingForOtherPlayer?: boolean;
+  isTurn?: boolean;
 }
 
 const GameControls = ({
@@ -25,10 +26,11 @@ const GameControls = ({
   onNewGame,
   isMultiplayer = false,
   currentPlayerId,
-  isWaitingForOtherPlayer = false
+  isWaitingForOtherPlayer = false,
+  isTurn = true
 }: GameControlsProps) => {
-  // In dynamic mode: no "whose turn", each player can roll any time unless game ended or rolling
-  const canRollDice = !gameEnded && !isWaitingForOtherPlayer;
+  // Only allow dice roll if: no win & not rolling & current player's turn
+  const canRollDice = !gameEnded && !isWaitingForOtherPlayer && isTurn;
 
   if (gameEnded) {
     return (

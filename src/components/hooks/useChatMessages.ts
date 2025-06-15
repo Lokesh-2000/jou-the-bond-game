@@ -35,13 +35,11 @@ export const useChatMessages = (
       .eq("session_id", sessionId)
       .order("sent_at", { ascending: true });
     if (data) {
-      // Ensure all message 'sender' values are typed correctly
       const typedMessages = data
         .map((msg: any) => {
           if (isSenderType(msg.sender)) {
             return msg as ChatMessage;
           }
-          // Fallback: ignore/skip message with invalid 'sender' type
           return null;
         })
         .filter(Boolean) as ChatMessage[];
@@ -66,6 +64,7 @@ export const useChatMessages = (
           filter: `session_id=eq.${sessionId}`,
         },
         payload => {
+          console.log("Received chat payload", payload, "session", sessionId);
           if (payload.new && isSenderType(payload.new.sender)) {
             setMessages(prev =>
               prev.some(msg => msg.id === payload.new.id)
