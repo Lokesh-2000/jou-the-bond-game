@@ -1,3 +1,4 @@
+
 import React from "react";
 import SnakeHead from "./SnakeHead";
 import { TILE_SIZE, tileToXY, cubicBezier, cubicBezierDeriv } from "../utils/snakeMath";
@@ -6,7 +7,7 @@ import { TILE_SIZE, tileToXY, cubicBezier, cubicBezierDeriv } from "../utils/sna
 const SNAKES = [
   { from: 38, to: 15, color: '#33a852' },   // green
   { from: 47, to: 19, color: '#a633ea', pathOffset: { headX: -8, headY: 10 } },   // purple - adjusted head visible
-  { from: 53, to: 35, color: '#12a9e9', pathOffset: { headX: 18, headY: -18 } },  // blue - adjusted head visible
+  { from: 53, to: 31, color: '#12a9e9', pathOffset: { headX: 18, headY: -18 } },  // blue - now 53-31 (was 53-35)
   { from: 62, to: 55, color: '#fac03c' },   // yellow
   { from: 86, to: 54, color: '#fd3577' },   // pink/red
   { from: 88, to: 24, color: '#12a9e9' },   // blue (was 87-24, now 88-24)

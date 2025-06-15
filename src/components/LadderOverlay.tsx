@@ -18,19 +18,46 @@ const LadderOverlay = () => {
   const woodDark = "#5B3E16";
 
   function renderLadder({ from, to }: { from: number; to: number }, i: number) {
-    // Ladders always go bottom→top, so start at bottom corner, end at top corner
-    const start = tileToCorner(from, "bl");
-    const end = tileToCorner(to, "tr");
+    // Adjust ladder endpoints: 
+    // Bottom goes slightly above the center of the bottom tile
+    // Top ends slightly below the center of the top tile
+    // We'll use the center of the tile and apply a small vertical offset
 
-    const dx = end.x - start.x,
-      dy = end.y - start.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
+    // Center of "from" tile (bottom of ladder)
+    const fromCenter = {
+      x: (( ( (from-1) % 10) + ((Math.floor((from-1)/10) % 2 === 1) ? 9 - 2*( (from-1) % 10 ) : 0)) * TILE_SIZE ) + TILE_SIZE/2,
+      y: (9 - Math.floor((from-1)/10)) * TILE_SIZE + TILE_SIZE/2
+    };
+    // Center of "to" tile (top of ladder)
+    const toCenter = {
+      x: (( ( (to-1) % 10) + ((Math.floor((to-1)/10) % 2 === 1) ? 9 - 2*( (to-1) % 10 ) : 0)) * TILE_SIZE ) + TILE_SIZE/2,
+      y: (9 - Math.floor((to-1)/10)) * TILE_SIZE + TILE_SIZE/2
+    };
+    // Up vector (ladder runs bottom up: dy negative)
+    const dx = toCenter.x - fromCenter.x;
+    const dy = toCenter.y - fromCenter.y;
+    const length = Math.sqrt(dx*dx + dy*dy);
+    // Offset for bottom above center (move up)
+    const start = {
+      x: fromCenter.x + dx * 0.07,
+      y: fromCenter.y + dy * 0.07 - Math.sign(dy) * TILE_SIZE * 0.14
+    };
+    // Offset for top below center (move down)
+    const end = {
+      x: toCenter.x - dx * 0.07,
+      y: toCenter.y - dy * 0.07 + Math.sign(dy) * TILE_SIZE * 0.14
+    };
 
-    const width = TILE_SIZE * 0.54;
+    // Ladder width/thickness reduced
+    const width = TILE_SIZE * 0.36;
     const rungs = 10;
     const rungStep = 1 / (rungs - 1);
 
-    const perp = { x: -dy / len, y: dx / len };
+    const localDx = end.x - start.x;
+    const localDy = end.y - start.y;
+    const localLen = Math.sqrt(localDx * localDx + localDy * localDy);
+
+    const perp = { x: -localDy / localLen, y: localDx / localLen };
 
     const leftStart = {
       x: start.x + perp.x * width * 0.5,
@@ -49,7 +76,7 @@ const LadderOverlay = () => {
       y: end.y - perp.y * width * 0.5,
     };
 
-    const shadowOffset = TILE_SIZE * 0.11;
+    const shadowOffset = TILE_SIZE * 0.08;
 
     return (
       <g key={`ladder${i}`}>
@@ -61,7 +88,7 @@ const LadderOverlay = () => {
             x2={leftEnd.x + shadowOffset}
             y2={leftEnd.y + shadowOffset}
             stroke="#222"
-            strokeWidth={TILE_SIZE * 0.13}
+            strokeWidth={TILE_SIZE * 0.09}
             strokeLinecap="round"
           />
           <line
@@ -70,7 +97,7 @@ const LadderOverlay = () => {
             x2={rightEnd.x + shadowOffset}
             y2={rightEnd.y + shadowOffset}
             stroke="#222"
-            strokeWidth={TILE_SIZE * 0.13}
+            strokeWidth={TILE_SIZE * 0.09}
             strokeLinecap="round"
           />
         </g>
@@ -81,7 +108,7 @@ const LadderOverlay = () => {
           x2={leftEnd.x}
           y2={leftEnd.y}
           stroke={wood}
-          strokeWidth={TILE_SIZE * 0.13}
+          strokeWidth={TILE_SIZE * 0.09}
           strokeLinecap="round"
         />
         <line
@@ -90,7 +117,7 @@ const LadderOverlay = () => {
           x2={rightEnd.x}
           y2={rightEnd.y}
           stroke={wood}
-          strokeWidth={TILE_SIZE * 0.13}
+          strokeWidth={TILE_SIZE * 0.09}
           strokeLinecap="round"
         />
         {/* Edge highlight */}
@@ -100,7 +127,7 @@ const LadderOverlay = () => {
           x2={leftEnd.x}
           y2={leftEnd.y}
           stroke="#eac192"
-          strokeWidth={TILE_SIZE * 0.03}
+          strokeWidth={TILE_SIZE * 0.018}
           strokeLinecap="round"
         />
         <line
@@ -109,16 +136,16 @@ const LadderOverlay = () => {
           x2={rightEnd.x}
           y2={rightEnd.y}
           stroke="#eac192"
-          strokeWidth={TILE_SIZE * 0.03}
+          strokeWidth={TILE_SIZE * 0.018}
           strokeLinecap="round"
         />
         {/* Ladder rungs */}
         {Array.from({ length: rungs }).map((_, idx) => {
-          const px = start.x + dx * rungStep * idx;
-          const py = start.y + dy * rungStep * idx;
+          const px = start.x + localDx * rungStep * idx;
+          const py = start.y + localDy * rungStep * idx;
           const rungHalf = {
-            x: perp.x * (width * 0.44),
-            y: perp.y * (width * 0.44),
+            x: perp.x * (width * 0.34),
+            y: perp.y * (width * 0.34),
           };
           return (
             <line
@@ -128,7 +155,7 @@ const LadderOverlay = () => {
               x2={px + rungHalf.x}
               y2={py + rungHalf.y}
               stroke={woodDark}
-              strokeWidth={TILE_SIZE * 0.07}
+              strokeWidth={TILE_SIZE * 0.053}
               strokeLinecap="round"
               filter="drop-shadow(0 1px 1px #fff1)"
             />
