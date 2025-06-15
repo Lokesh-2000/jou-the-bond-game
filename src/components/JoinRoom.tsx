@@ -68,7 +68,7 @@ const JoinRoom = ({ onComplete, roomCode }: JoinRoomProps) => {
       if (!session) {
         toast({
           title: "Room Not Found",
-          description: "The room code you entered doesn't exist.",
+          description: "The room code you entered doesn't exist or is already full.",
           variant: "destructive",
         });
         return;
@@ -107,10 +107,14 @@ const JoinRoom = ({ onComplete, roomCode }: JoinRoomProps) => {
         isPlayer2: true
       });
     } catch (error: any) {
-      console.error('Error joining session:', error);
+      // Show specific error for full or missing rooms
+      const errMsg =
+        error?.message?.includes("already has two players")
+          ? "This room does not exist or already has two players. Please check the code or ask the host for help."
+          : error.message || "Failed to join the session. Please try again.";
       toast({
         title: "Join Failed",
-        description: error.message || "Failed to join the session. Please try again.",
+        description: errMsg,
         variant: "destructive",
       });
     } finally {

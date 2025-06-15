@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Define types for the data we'll be storing in the session
@@ -28,7 +27,7 @@ const generateSessionId = (): string => {
 // Session management functions
 export const sessionManager = {
   async createSession(
-    gameData: any,    // fixed: accept gameData as first arg, nickname as second arg for InvitePlayer
+    gameData: any,
     player1Nickname: string
   ): Promise<Session> {
     const sessionId = generateSessionId();
@@ -60,17 +59,25 @@ export const sessionManager = {
   async joinSession(sessionId: string, player2Nickname: string): Promise<Session | null> {
     const player2Id = Math.random().toString(36).substring(2, 15);
 
+    // Use maybeSingle to avoid throwing error if no row found
     const { data, error } = await supabase
       .from('sessions')
       .update({ player2_id: player2Id, player2_nickname: player2Nickname })
       .eq('session_id', sessionId)
-      .eq('player2_id', null) // Ensure only one player joins
+      .eq('player2_id', null) // Only join if slot is available
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error joining session:", error);
       throw error;
+    }
+
+    // If no data was returned, handle as user-friendly error
+    if (!data) {
+      throw new Error(
+        "Unable to join: This room does not exist or already has two players."
+      );
     }
 
     return data;
