@@ -26,10 +26,10 @@ const BoardTile = ({
   row,
   col,
 }: BoardTileProps) => {
-  // Checkerboard pattern
+  // Checkerboard pattern - consistent colors
   const getTileColor = () => {
     const even = (row + col) % 2 === 0;
-    return even ? "bg-[#bfbfbf]" : "bg-[#FFD5E5]";
+    return even ? "bg-[#F0F8FF]" : "bg-[#FFE4E1]";
   };
 
   // Text color
@@ -39,62 +39,65 @@ const BoardTile = ({
     return "text-gray-800";
   };
 
-  // Chess pawn size: 65% of tile (tile ~80px, pawn ~52px)
-  const pawnSize = 0.65 * 80; // ignore sm:w override for now (grid always min 80px)
-  const pawnOffset = -(pawnSize / 2);
+  // Chess pawn size: 65% of tile
+  const pawnSize = 0.65 * 80;
 
   return (
     <div
       className={`
         relative flex items-center justify-center
         ${getTileColor()}
-        border-[2px] border-black
-        w-16 h-16 sm:w-20 sm:h-20
-        transition-all duration-300
+        border-[1px] border-gray-400
+        transition-all duration-200
       `}
       style={{
         gridRow: row + 1,
         gridColumn: col + 1,
-        borderRadius: "0.33rem",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-        overflow: "visible"
+        borderRadius: "0.25rem",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        overflow: "visible",
+        width: "100%",
+        height: "100%",
+        minWidth: "64px",
+        minHeight: "64px"
       }}
     >
       {/* Centered Number */}
       <span
         className={`
           flex items-center justify-center
-          text-base sm:text-lg font-bold select-none drop-shadow
+          text-sm sm:text-base font-bold select-none
           ${getTextColor()}
           absolute inset-0 pointer-events-none
         `}
         style={{
-          textShadow:
-            "0 1px 1px rgba(255,255,255,0.7), 1px 1px 2px rgba(0,0,0,0.08)",
+          textShadow: "0 1px 2px rgba(255,255,255,0.8)",
           zIndex: 2,
         }}
       >
         {tileNumber}
       </span>
+      
       {/* START/FINISH labels */}
       {tileNumber === START_TILE && (
-        <span className="absolute bottom-2 left-2 text-xs sm:text-sm font-black px-2 py-0.5 rounded bg-green-100 text-green-700 border border-green-300 shadow z-10 select-none">
+        <span className="absolute bottom-1 left-1 text-xs font-bold px-1 py-0.5 rounded bg-green-100 text-green-700 border border-green-300 shadow z-10 select-none">
           START
         </span>
       )}
       {tileNumber === FINISH_TILE && (
-        <span className="absolute bottom-2 right-2 text-xs sm:text-sm font-black px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-300 shadow z-10 select-none">
+        <span className="absolute bottom-1 right-1 text-xs font-bold px-1 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-300 shadow z-10 select-none">
           FINISH
         </span>
       )}
+      
       {/* Player 1 Chess Pawn */}
       {hasPlayer1 && (
         <span
           style={{
             position: "absolute",
             left: "50%",
-            top: "49%",
-            transform: `translate(-60%, -53%)`,
+            top: "50%",
+            transform: `translate(-60%, -50%)`,
             zIndex: 30,
             width: pawnSize,
             height: pawnSize,
@@ -104,14 +107,15 @@ const BoardTile = ({
           <Pawn color="#a259f7" size={pawnSize} />
         </span>
       )}
+      
       {/* Player 2 Chess Pawn */}
       {hasPlayer2 && (
         <span
           style={{
             position: "absolute",
             left: "50%",
-            top: "49%",
-            transform: `translate(-40%, -53%)`,
+            top: "50%",
+            transform: `translate(-40%, -50%)`,
             zIndex: 30,
             width: pawnSize,
             height: pawnSize,

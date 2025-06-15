@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import BoardTile from './BoardTile';
 import SnakeOverlay, { SNAKES, SNAKE_PATHS } from './SnakeOverlay';
@@ -137,26 +138,30 @@ const GameBoardGrid = ({
         maxHeight: '100vw'
       }}
     >
-      {/* Overlays */}
-      <SnakeOverlay />
-      <LadderOverlay />
-      {/* Sliding tokens */}
-      {sliding?.path && sliding.player === 'player1' && (
-        <AnimatedToken path={sliding.path} color="#e15456" zIndex={21} tokenClass="drop-shadow-md" />
-      )}
-      {sliding?.path && sliding.player === 'player2' && (
-        <AnimatedToken path={sliding.path} color="#578af4" zIndex={21} tokenClass="drop-shadow-md" />
-      )}
-      {/* Tiles */}
+      {/* Board tiles grid - render first as base layer */}
       <div
-        className="grid grid-rows-10 grid-cols-10 w-full h-full"
+        className="grid grid-rows-10 grid-cols-10 w-full h-full absolute inset-0"
         style={{
-          minWidth: '640px', // ensures SVG overlays match grid
-          minHeight: '640px',
+          width: '100%',
+          height: '100%',
         }}
       >
         {createBoard()}
       </div>
+      
+      {/* Snake overlays */}
+      <SnakeOverlay />
+      
+      {/* Ladder overlays */}
+      <LadderOverlay />
+      
+      {/* Sliding tokens - render on top */}
+      {sliding?.path && sliding.player === 'player1' && (
+        <AnimatedToken path={sliding.path} color="#a259f7" zIndex={21} tokenClass="drop-shadow-md" />
+      )}
+      {sliding?.path && sliding.player === 'player2' && (
+        <AnimatedToken path={sliding.path} color="#ff62a3" zIndex={21} tokenClass="drop-shadow-md" />
+      )}
     </div>
   );
 };

@@ -28,17 +28,17 @@ function drawLadder(from: number, to: number, color: string) {
         y1={yL}
         x2={xR}
         y2={yR}
-        stroke="#995ae5"
+        stroke="#8B4513"
         strokeWidth="6"
         strokeLinecap="round"
-        opacity="0.8"
+        opacity="0.9"
       />
     );
   }
   return (
     <>
-      <line {...leftRail} stroke={color} strokeWidth="10" strokeLinecap="round" opacity="0.80"/>
-      <line {...rightRail} stroke={color} strokeWidth="10" strokeLinecap="round" opacity="0.80"/>
+      <line {...leftRail} stroke={color} strokeWidth="10" strokeLinecap="round" opacity="0.85"/>
+      <line {...rightRail} stroke={color} strokeWidth="10" strokeLinecap="round" opacity="0.85"/>
       {rungs}
     </>
   );
@@ -50,7 +50,7 @@ const LadderOverlay = () => {
     <svg width={640} height={640} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none", zIndex: 7 }}>
       {Object.entries(ladders).map(([from, to], idx) =>
         <g key={from + "" + to}>
-          {drawLadder(Number(from), Number(to), "#995ae5")}
+          {drawLadder(Number(from), Number(to), "#D2691E")}
         </g>
       )}
     </svg>
