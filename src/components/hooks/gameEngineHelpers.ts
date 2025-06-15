@@ -37,7 +37,8 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const roll = Math.floor(Math.random() * 6) + 1;
-    const newGameState = { ...gameState, lastDiceRoll: roll };
+    // Work on clone to build new state
+    let newGameState: GameState = { ...gameState, lastDiceRoll: roll };
 
     // Move player
     const currentPlayer = gameState.currentTurn;
@@ -53,13 +54,14 @@ export function useGameEngineHelpers(gameData: any, gameState: GameState, setGam
       const snakeTail = snakes[newPosition];
       const snakePath = getSnakeBodyPath(newPosition, snakeTail);
       if (snakePath && snakePath.length > 0) {
-        setGameState(gs => ({
-          ...gs,
+        // Provide full GameState, not updater
+        setGameState({
+          ...gameState,
           sliding: {
             path: snakePath,
             player: currentPlayer,
           }
-        }));
+        });
         await new Promise(res => setTimeout(res, 2000));
         newPosition = snakeTail;
         if (onReaction) onReaction('snake');
