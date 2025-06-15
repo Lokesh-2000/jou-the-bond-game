@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import GameBoardGrid from './GameBoardGrid';
@@ -220,7 +219,6 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
               player1Position={gameState.player1Position}
               player2Position={gameState.player2Position}
               onTileClick={handleTileClick}
-              relationshipType={gameData.relationshipType || 'friend'}
             />
           </div>
 

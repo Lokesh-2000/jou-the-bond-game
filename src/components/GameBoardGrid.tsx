@@ -1,23 +1,20 @@
 
 import React from 'react';
 import BoardTile from './BoardTile';
-import SnakeOverlay from './SnakeOverlay';
-import LadderOverlay from './LadderOverlay';
 
-// Utility to determine if tile has a snake or ladder
+// Utility to determine if tile has a snake or ladder (positions will be updated later)
 const getSpecialTiles = () => ({
-  snakes: { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78 },
-  ladders: { 1: 38, 4: 14, 9: 21, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100 }
+  snakes: {}, // Fixed positions, empty for now
+  ladders: {}
 });
 
 interface GameBoardGridProps {
   player1Position: number;
   player2Position: number;
   onTileClick: (position: number) => void;
-  relationshipType: string;
 }
 
-const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relationshipType }: GameBoardGridProps) => {
+const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBoardGridProps) => {
   const { snakes, ladders } = getSpecialTiles();
 
   const createBoard = () => {
@@ -61,11 +58,11 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relation
     <div className="relative bg-white rounded-lg p-4 shadow-lg">
       <div className="relative">
         {createBoard()}
-        <SnakeOverlay relationshipType={relationshipType} />
-        <LadderOverlay relationshipType={relationshipType} />
+        {/* SnakeOverlay and LadderOverlay removed */}
       </div>
     </div>
   );
 };
 
 export default GameBoardGrid;
+
