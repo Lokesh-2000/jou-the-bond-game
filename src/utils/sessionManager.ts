@@ -59,12 +59,37 @@ export const sessionManager = {
   async joinSession(sessionId: string, player2Nickname: string): Promise<Session | null> {
     const player2Id = Math.random().toString(36).substring(2, 15);
 
-    // Use maybeSingle to avoid throwing error if no row found
+    // First, fetch the current session for debugging and check slot.
+    const { data: session, error: fetchError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .maybeSingle();
+
+    console.log("Attempting to join session:", sessionId, "Fetched session:", session);
+
+    if (fetchError) {
+      console.error("Error fetching session for join:", fetchError);
+      throw fetchError;
+    }
+
+    // Room not found
+    if (!session) {
+      throw new Error("Unable to join: This room does not exist.");
+    }
+
+    // Restrict join only if player2_id is already set (and not empty/falsy)
+    if (session.player2_id && session.player2_id !== null && session.player2_id !== "") {
+      throw new Error("Unable to join: This room already has two players.");
+    }
+
+    // Update the session to join as player2
     const { data, error } = await supabase
       .from('sessions')
       .update({ player2_id: player2Id, player2_nickname: player2Nickname })
       .eq('session_id', sessionId)
-      .eq('player2_id', null) // Only join if slot is available
+      // Loosen up: allow join if player2_id is null or empty string (for legacy data)
+      .in('player2_id', [null, ''])
       .select()
       .maybeSingle();
 
@@ -73,10 +98,14 @@ export const sessionManager = {
       throw error;
     }
 
-    // If no data was returned, handle as user-friendly error
+    // If still no data returned, something's wrong
     if (!data) {
+      console.error(
+        "Unable to join session: update failed, room might be taken, or another bug. Session before update:",
+        session
+      );
       throw new Error(
-        "Unable to join: This room does not exist or already has two players."
+        "Unable to join: This room does not exist or already has two players (please ask host for a new code)."
       );
     }
 
