@@ -1,3 +1,6 @@
+
+import React from "react";
+
 interface BoardTileProps {
   tileNumber: number;
   hasPlayer1: boolean;
@@ -9,92 +12,98 @@ interface BoardTileProps {
   col: number;
 }
 
-const BoardTile = ({ 
-  tileNumber, 
-  hasPlayer1, 
-  hasPlayer2, 
-  hasSnake, 
-  hasLadder, 
+const START_TILE = 1;
+const FINISH_TILE = 100;
+
+const BoardTile = ({
+  tileNumber,
+  hasPlayer1,
+  hasPlayer2,
+  hasSnake,
+  hasLadder,
   themeColors,
   row,
-  col 
+  col,
 }: BoardTileProps) => {
-  // Two-color alternating pattern: light grey and light pink
+  // Checkerboard pattern
   const getTileColor = () => {
-    if (hasSnake) return 'bg-rose-100/90';
-    if (hasLadder) return 'bg-emerald-100/90';
-    
-    // Alternating pattern between light grey and light pink
-    const isEvenTile = tileNumber % 2 === 0;
-    return isEvenTile ? 'bg-gray-200' : 'bg-pink-200';
+    // Soft alternating: even row, even col => gray, odd row/col => pink
+    const even = (row + col) % 2 === 0;
+    return even ? "bg-[#EDEDED]" : "bg-[#FFD5E5]";
   };
 
-  // Text color based on background
+  // Text color
   const getTextColor = () => {
-    if (hasSnake) return 'text-rose-700';
-    if (hasLadder) return 'text-emerald-700';
-    return 'text-gray-800';
+    if (tileNumber === START_TILE) return "text-green-600";
+    if (tileNumber === FINISH_TILE) return "text-rose-600";
+    return "text-gray-800";
   };
 
-  // Special emotional milestone tiles (now just a marker, visuals removed)
-  const isSpecialTile = [5, 58, 87, 93].includes(tileNumber);
-  
   return (
-    <div 
+    <div
       className={`
         relative flex items-center justify-center
-        transition-all duration-300 hover:scale-105 hover:shadow-lg
         ${getTileColor()}
-        ${hasPlayer1 || hasPlayer2 ? 'ring-2 ring-white shadow-lg' : 'shadow-sm'}
-        ${isSpecialTile ? 'ring-1 ring-pink-200/50' : ''}
+        border-[2px] border-black
+        w-16 h-16 sm:w-20 sm:h-20
+        transition-all duration-300
       `}
       style={{
-        width: '64px',
-        height: '64px',
         gridRow: row + 1,
         gridColumn: col + 1,
-        border: '3.5px solid black',
-        borderRadius: '0px',
-        boxShadow: hasSnake || hasLadder ? 
-          '0 4px 12px rgba(0,0,0,0.15)' : 
-          '0 2px 6px rgba(0,0,0,0.08)'
+        borderRadius: "0.33rem",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
       }}
     >
-      {/* Large, high-contrast number - always visible */}
-      <span className={`
-        text-lg font-black drop-shadow-md select-none z-10 relative
-        ${getTextColor()}
-      `}
+      {/* Number */}
+      <span
+        className={`
+          absolute left-1 top-1 text-base sm:text-lg font-bold select-none drop-shadow
+          ${getTextColor()}
+        `}
         style={{
-          textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+          textShadow:
+            "0 1px 1px rgba(255,255,255,0.7), 1px 1px 2px rgba(0,0,0,0.08)",
+          zIndex: 2,
         }}
       >
         {tileNumber}
       </span>
-      
-      {/* Hearts have been removed as requested */}
-      
-      {/* Player indicators with romantic styling */}
+      {/* START/FINISH labels */}
+      {tileNumber === START_TILE && (
+        <span className="absolute bottom-2 left-2 text-xs sm:text-sm font-black px-2 py-0.5 rounded bg-green-100 text-green-700 border border-green-300 shadow z-10 select-none">
+          START
+        </span>
+      )}
+      {tileNumber === FINISH_TILE && (
+        <span className="absolute bottom-2 right-2 text-xs sm:text-sm font-black px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-300 shadow z-10 select-none">
+          FINISH
+        </span>
+      )}
+      {/* Players */}
       {hasPlayer1 && (
-        <div className={`
+        <div
+          className={`
           absolute -top-2 -left-2 w-6 h-6 rounded-full 
           bg-gradient-to-br from-pink-400 to-rose-500
           flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
           border border-white/20 z-30
-        `}>
+        `}
+        >
           1
         </div>
       )}
-      
       {hasPlayer2 && (
-        <div className={`
+        <div
+          className={`
           absolute -top-2 -right-2 w-6 h-6 rounded-full 
           bg-gradient-to-br from-purple-400 to-indigo-500
           flex items-center justify-center text-white text-sm font-bold
           ring-2 ring-white shadow-lg animate-pulse
           border border-white/20 z-30
-        `}>
+        `}
+        >
           2
         </div>
       )}

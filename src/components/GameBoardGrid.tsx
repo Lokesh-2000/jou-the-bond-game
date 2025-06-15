@@ -1,11 +1,18 @@
 
 import React from 'react';
 import BoardTile from './BoardTile';
+import SnakeOverlay from './SnakeOverlay';
+import LadderOverlay from './LadderOverlay';
 
-// Utility to determine if tile has a snake or ladder (positions will be updated later)
+// Utility to determine if tile has a snake or ladder (for board rendering)
 const getSpecialTiles = () => ({
-  snakes: {}, // Fixed positions, empty for now
-  ladders: {}
+  snakes: {
+    38: 15, 47: 19, 53: 35,
+    62: 55, 86: 54, 87: 24, 92: 70, 94: 6, 97: 78, 82: 65, 29: 8,
+  },
+  ladders: {
+    5: 58, 9: 27, 33: 87, 40: 64, 57: 73, 63: 81, 75: 93,
+  }
 });
 
 interface GameBoardGridProps {
@@ -17,12 +24,12 @@ interface GameBoardGridProps {
 const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBoardGridProps) => {
   const { snakes, ladders } = getSpecialTiles();
 
+  // 10x10 board
   const createBoard = () => {
     const tiles = [];
     for (let row = 9; row >= 0; row--) {
-      const rowTiles = [];
       for (let col = 0; col < 10; col++) {
-        const position = row % 2 === 1 
+        const position = row % 2 === 1
           ? row * 10 + (10 - col)
           : row * 10 + (col + 1);
 
@@ -31,7 +38,7 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
         const hasSnake = snakes.hasOwnProperty(position);
         const hasLadder = ladders.hasOwnProperty(position);
 
-        rowTiles.push(
+        tiles.push(
           <BoardTile
             key={position}
             tileNumber={position}
@@ -45,24 +52,35 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick }: GameBo
           />
         );
       }
-      tiles.push(
-        <div key={row} className="flex">
-          {rowTiles}
-        </div>
-      );
     }
     return tiles;
   };
 
+  // Board aspect & overlays
   return (
-    <div className="relative bg-white rounded-lg p-4 shadow-lg">
-      <div className="relative">
+    <div
+      className="relative mx-auto rounded-lg border-[3px] border-black shadow-xl aspect-square bg-white overflow-visible"
+      style={{
+        width: 'min(95vw, 95vh, 640px)',
+        maxWidth: '100vw',
+        maxHeight: '100vw'
+      }}
+    >
+      {/* Overlays */}
+      <SnakeOverlay />
+      <LadderOverlay />
+      {/* Tiles */}
+      <div
+        className="grid grid-rows-10 grid-cols-10 w-full h-full"
+        style={{
+          minWidth: '640px', // ensures SVG overlays match grid
+          minHeight: '640px',
+        }}
+      >
         {createBoard()}
-        {/* SnakeOverlay and LadderOverlay removed */}
       </div>
     </div>
   );
 };
 
 export default GameBoardGrid;
-
