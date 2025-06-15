@@ -11,6 +11,10 @@ interface ChatMessage {
   sent_at: string;
 }
 
+// Helper to cast sender type
+const isSenderType = (v: string): v is ChatMessage["sender"] =>
+  v === "player1" || v === "player2" || v === "system";
+
 // Use `sessionId` to scope chat messages to the game
 export const useChatMessages = (
   sessionId: string | undefined,
@@ -30,7 +34,19 @@ export const useChatMessages = (
       .select("*")
       .eq("session_id", sessionId)
       .order("sent_at", { ascending: true });
-    if (data) setMessages(data);
+    if (data) {
+      // Ensure all message 'sender' values are typed correctly
+      const typedMessages = data
+        .map((msg: any) => {
+          if (isSenderType(msg.sender)) {
+            return msg as ChatMessage;
+          }
+          // Fallback: ignore/skip message with invalid 'sender' type
+          return null;
+        })
+        .filter(Boolean) as ChatMessage[];
+      setMessages(typedMessages);
+    }
     setLoading(false);
   }, [sessionId]);
 
@@ -50,11 +66,11 @@ export const useChatMessages = (
           filter: `session_id=eq.${sessionId}`,
         },
         payload => {
-          if (payload.new) {
+          if (payload.new && isSenderType(payload.new.sender)) {
             setMessages(prev =>
               prev.some(msg => msg.id === payload.new.id)
                 ? prev
-                : [...prev, payload.new]
+                : [...prev, payload.new as ChatMessage]
             );
           }
         }
