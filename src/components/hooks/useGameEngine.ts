@@ -139,15 +139,11 @@ export const useGameEngine = (gameData: any) => {
         : gameState.player2Position;
     let newPosition = Math.min(100, currentPosition + roll);
 
-    // Handle special tiles
-    const { snakes, ladders } = getSpecialTiles();
-
-    // Snake slide animation: if bitten by a snake, animate token
+    // Handle special tiles, now using destructured snakes/ladders
     if (snakes[newPosition]) {
       const snakeTail = snakes[newPosition];
       const snakePath = getSnakeBodyPath(newPosition, snakeTail);
       if (snakePath && snakePath.length > 0) {
-        // Set sliding state, prevent further moves
         setGameState(gs => ({
           ...gs,
           sliding: {
@@ -155,9 +151,7 @@ export const useGameEngine = (gameData: any) => {
             player: currentPlayer,
           }
         }));
-        // Let other moves halt
         await new Promise(res => setTimeout(res, 2000));
-        // After 2s slide, actually move the player
         newPosition = snakeTail;
         if (onReaction) onReaction('snake');
       } else {
@@ -210,16 +204,15 @@ export const useGameEngine = (gameData: any) => {
 
     setGameState(newGameState);
 
-    // Multiplayer game state update
     if (isMultiplayer && gameData.onGameStateUpdate) {
       await gameData.onGameStateUpdate(newGameState);
     }
 
-    setIsRolling(false); // FIX: make sure rolling stops after move
+    setIsRolling(false);
   };
 
   const handleNewGame = () => {
-    if (isMultiplayer) return; // Don't allow new game in multiplayer
+    if (isMultiplayer) return;
     setGameState({
       player1Position: 0,
       player2Position: 0,
@@ -249,7 +242,7 @@ export const useGameEngine = (gameData: any) => {
     rollDiceAndMove,
     handleNewGame,
     handleTileClick,
-    getSpecialTiles,
+    getSpecialTiles: () => ({ snakes, ladders }),
     isMultiplayer,
     currentPlayerId,
   };
