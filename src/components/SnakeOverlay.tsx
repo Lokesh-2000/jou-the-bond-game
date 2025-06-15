@@ -6,8 +6,8 @@ import { TILE_SIZE, tileToXY, cubicBezier, cubicBezierDeriv } from "../utils/sna
 // Updated snakes as per prompt
 const SNAKES = [
   { from: 38, to: 15, color: '#33a852' },   // green
-  { from: 47, to: 19, color: '#a633ea', pathOffset: { headX: -8, headY: 10 } },   // purple - adjusted head visible
-  { from: 53, to: 31, color: '#12a9e9', pathOffset: { headX: 18, headY: -18 } },  // blue - now 53-31 (was 53-35)
+  { from: 47, to: 19, color: '#a633ea', pathOffset: { headX: -8, headY: 10 } },   // purple
+  { from: 53, to: 31, color: '#12a9e9', pathOffset: { headX: 18, headY: -18 } },  // blue
   { from: 62, to: 55, color: '#fac03c' },   // yellow
   { from: 86, to: 54, color: '#fd3577' },   // pink/red
   { from: 88, to: 24, color: '#12a9e9' },   // blue (was 87-24, now 88-24)
@@ -18,12 +18,20 @@ const SNAKES = [
   { from: 29, to: 8,  color: '#33a852' },   // green
 ];
 
+// Use a color-to-style map for custom tail/shape by color (from refs)
+const SNAKE_TAIL_STYLES: Record<string, { tailTaper: number; tailLen: number; tailCurve?: number }> = {
+  "#12a9e9": { tailTaper: 0.10, tailLen: 2.5, tailCurve: 0.13 }, // ultra-long blue tail like img
+  "#33a852": { tailTaper: 0.18, tailLen: 1.7 },
+  "#a633ea": { tailTaper: 0.15, tailLen: 1.4 },
+  "#fac03c": { tailTaper: 0.18, tailLen: 1.4 },
+  "#fd3577": { tailTaper: 0.18, tailLen: 1.5 },
+};
+
 const SnakeOverlay = () => {
   function renderSnake({ from, to, color, pathOffset }: typeof SNAKES[number], i: number) {
     let head = tileToXY(from);
     const tail = tileToXY(to);
 
-    // Extend/offset head position if custom pathOffset set (for visual head separation)
     if (pathOffset) {
       head = { x: head.x + pathOffset.headX, y: head.y + pathOffset.headY };
     }
@@ -31,7 +39,7 @@ const SnakeOverlay = () => {
     const dx = tail.x - head.x, dy = tail.y - head.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // S-curve: Add more curvature for snakes whose head/tail need to be separated
+    // S-curve, as before
     const curveAmount = Math.max(TILE_SIZE * 1.2, dist / 2.2);
     const mid1 = {
       x: head.x + dx * 0.35 + (dy / dist) * curveAmount * 0.6,
@@ -48,24 +56,47 @@ const SnakeOverlay = () => {
     const angle = Math.atan2(mid1.y - head.y, mid1.x - head.x) * 180 / Math.PI;
     const thickness = TILE_SIZE * 0.28;
 
+    const tailStyle = SNAKE_TAIL_STYLES[color] || { tailTaper: 0.14, tailLen: 1.4 };
+    // Segment proportions for main body/curve
     const bodyPath = `
       M ${head.x} ${head.y}
       C ${mid1.x} ${mid1.y} ${mid2.x} ${mid2.y} ${tail.x} ${tail.y}
     `;
 
-    // Find the direction for a sharp tail: interpolate near the end, then extend further
-    // Find near-tail direction (derivative at t ~ 1, i.e. 96%)
+    // SHARPLY EXTENDED, THIN TAIL (after normal endpoint)
+    // tA = 1.0 (tail tile), tB = 1.0 + tailLen/bodyLen, and interpolate/taper
+    // We'll extend using the tangent at t=1 and fade thickness to nothing
+
     const sharpTailT = 0.96;
-    const tailX = cubicBezier(head.x, mid1.x, mid2.x, tail.x, sharpTailT);
-    const tailY = cubicBezier(head.y, mid1.y, mid2.y, tail.y, sharpTailT);
+    const nearTailX = cubicBezier(head.x, mid1.x, mid2.x, tail.x, sharpTailT);
+    const nearTailY = cubicBezier(head.y, mid1.y, mid2.y, tail.y, sharpTailT);
     const tailDx = cubicBezierDeriv(head.x, mid1.x, mid2.x, tail.x, 1);
     const tailDy = cubicBezierDeriv(head.y, mid1.y, mid2.y, tail.y, 1);
-    const norm = Math.sqrt(tailDx*tailDx + tailDy*tailDy);
+    const norm = Math.sqrt(tailDx * tailDx + tailDy * tailDy);
 
-    // Extend sharp, pointy tail (line past tail along tangent)
-    const tailSharpLen = thickness * 1.05;
-    const tailSharpX = tail.x + (tailDx/norm) * tailSharpLen;
-    const tailSharpY = tail.y + (tailDy/norm) * tailSharpLen;
+    // Length/shape for extension
+    const extLen = thickness * 3.4 * (tailStyle.tailLen || 1.4);
+    const tailTaper = tailStyle.tailTaper; // 0.1 = ultra-thin end
+
+    const tailTipX = tail.x + (tailDx / norm) * extLen;
+    const tailTipY = tail.y + (tailDy / norm) * extLen;
+
+    // Body details: add ellipse "bands" like sample image
+    // (optional: only for certain colors, e.g. green, purple, blue)
+
+    // Stripes: Use color/positions like green image (bands, offset each segment)
+    const bandColors = {
+      "#33a852": "#1d8842",
+      "#12a9e9": "#27d8e5",
+      "#a633ea": "#ff3dcd", // magenta spots for purple
+      "#fac03c": "#f9b134",
+      "#fd3577": "#cc2557",
+    };
+    const hasBands = color === "#33a852" || color === "#12a9e9" || color === "#a633ea";
+
+    // Poly tail
+    const tailBase1X = tail.x - (thickness*tailTaper), tailBase1Y = tail.y - (thickness*tailTaper*0.25);
+    const tailBase2X = tail.x + (thickness*tailTaper), tailBase2Y = tail.y + (thickness*tailTaper*0.25);
 
     return (
       <g key={`snake${i}`}>
@@ -88,47 +119,55 @@ const SnakeOverlay = () => {
           strokeLinecap="round"
           filter="drop-shadow(0 2px 6px #0002)"
         />
-        {/* Body details */}
-        {Array.from({ length: 7 }).map((_, ringIdx) => {
-          const t = 0.17 + 0.62 * (ringIdx / 6);
-          function cubicBezier(posA: number, posB: number, posC: number, posD: number, t: number) {
-            const mt = 1-t;
-            return mt*mt*mt*posA
-              + 3*mt*mt*t*posB
-              + 3*mt*t*t*posC
-              + t*t*t*posD;
-          }
+        {/* Body bands/stripes/dots */}
+        {hasBands && Array.from({ length: 7 }).map((_, bandIdx) => {
+          const t = 0.12 + 0.72 * (bandIdx / 6); // Spread along length
+          // Offset slightly by band for more organic effect
           const x = cubicBezier(head.x, mid1.x, mid2.x, tail.x, t);
           const y = cubicBezier(head.y, mid1.y, mid2.y, tail.y, t);
-          const dxdt = 3*(1-t)*(1-t)*(mid1.x-head.x) + 6*(1-t)*t*(mid2.x-mid1.x) + 3*t*t*(tail.x-mid2.x);
-          const dydt = 3*(1-t)*(1-t)*(mid1.y-head.y) + 6*(1-t)*t*(mid2.y-mid1.y) + 3*t*t*(tail.y-mid2.y);
-          const perpAngle = Math.atan2(dydt, dxdt) + Math.PI/2;
-          const rx = thickness*0.25, ry = thickness*0.11;
+          let rx = thickness*0.28, ry = thickness*0.13;
+          if (color === "#a633ea") { 
+            rx *= 1.4; ry *= 1.1;
+          }
           return (
             <ellipse
-              key={ringIdx}
+              key={bandIdx}
               cx={x}
               cy={y}
               rx={rx}
               ry={ry}
-              fill="#fff"
-              fillOpacity={0.6}
-              stroke="#fff"
-              strokeWidth="1"
-              opacity={0.65}
-              transform={`rotate(${perpAngle*180/Math.PI},${x},${y})`}
+              fill={bandColors[color] || "#999"}
+              fillOpacity={ color === "#a633ea" ? 0.32 : 0.4 }
+              stroke="none"
+              opacity={0.86}
+              transform={`rotate(${(bandIdx%2)*24 - 10},${x},${y})`}
             />
           );
         })}
+        {/* Light edge highlight on snake's back */}
+        <path
+          d={bodyPath}
+          stroke="#fff6"
+          strokeWidth={thickness*0.21}
+          fill="none"
+          strokeLinecap="round"
+          style={{
+            filter: color === "#33a852" ? "blur(0.5px)" : "",
+            opacity: 0.7,
+            mixBlendMode: "screen"
+          }}
+        />
         {/* Snake head */}
         <SnakeHead x={head.x} y={head.y} angle={angle} color={color} tileSize={TILE_SIZE} />
-        {/* SHARP/POINTED TAIL */}
+        {/* SHARP, LONG, TAPERED TAIL (SVG polygon, ultra-thin per image) */}
         <polygon
-          points={`${tail.x - thickness*0.22},${tail.y - thickness*0.08} 
-                  ${tail.x + thickness*0.22},${tail.y + thickness*0.08} 
-                  ${tailSharpX},${tailSharpY}`}
+          points={`
+            ${tailBase1X},${tailBase1Y}
+            ${tailBase2X},${tailBase2Y}
+            ${tailTipX},${tailTipY}
+          `}
           fill={color}
-          opacity={0.86}
+          opacity={0.89}
         />
       </g>
     );
