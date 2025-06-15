@@ -42,10 +42,9 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relation
             hasPlayer2={hasPlayer2}
             hasSnake={hasSnake}
             hasLadder={hasLadder}
-            themeColors={null} // Currently not used, can add themed coloring if needed
+            themeColors={null}
             row={row}
             col={col}
-            onClick={() => onTileClick(position)}
           />
         );
       }
@@ -70,4 +69,3 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relation
 };
 
 export default GameBoardGrid;
-
