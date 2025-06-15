@@ -71,11 +71,17 @@ const DiceController = ({ diceValue, onClick, disabled }: DiceControllerProps) =
 
   // Track rolling state for dice animation
   const [rolling, setRolling] = React.useState(false);
+
+  // Fix dice: only animate as rolling when disabled *and* the click just happened.
   useEffect(() => {
+    // Only enable rolling animation when the dice is about to be rolled (i.e., right after button click)
     if (disabled) {
       setRolling(true);
     } else {
-      setRolling(false);
+      // Wait for animation to end, then set rolling to false (prevents button becoming stuck)
+      // Animation duration is 1s; use timer to unset.
+      const timeout = setTimeout(() => setRolling(false), 1000);
+      return () => clearTimeout(timeout);
     }
   }, [disabled]);
 
@@ -114,4 +120,3 @@ const DiceController = ({ diceValue, onClick, disabled }: DiceControllerProps) =
 };
 
 export default DiceController;
-

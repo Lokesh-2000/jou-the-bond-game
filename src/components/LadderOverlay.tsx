@@ -2,7 +2,7 @@
 import React from "react";
 import { TILE_SIZE, tileToCorner } from "../utils/ladderMath";
 
-// All ladders use same rung spacing, and ladder from 76→84 uses fewer rungs.
+// All ladders use same rung spacing and rung count.
 const LADDERS = [
   { from: 5, to: 58 },
   { from: 9, to: 27 },
@@ -10,19 +10,18 @@ const LADDERS = [
   { from: 40, to: 64 },
   { from: 51, to: 73 },
   { from: 61, to: 81 },
-  { from: 76, to: 84 }, // Short ladder, use less rungs
+  { from: 76, to: 84 },
 ];
+
+const LADDER_RUNG_COUNT = 12; // Same for every ladder
 
 const LadderOverlay = () => {
   const wood = "#9B6830";
   const woodDark = "#5B3E16";
 
-  // Ladders uniformly spaced, both ends inside tiles
   function renderLadder({ from, to }: { from: number; to: number }, i: number) {
-    // Offset for all ladders so ends well inside tiles:
-    const ladderInset = TILE_SIZE * 0.25; // move endpoints away from tile border
+    const ladderInset = TILE_SIZE * 0.25;
 
-    // Find base/tip corners (use tile centers for inside effect)
     const n = (n: number) => n - 1;
     const rowcol = (tileNum: number) => {
       const row = Math.floor(n(tileNum) / 10);
@@ -61,8 +60,8 @@ const LadderOverlay = () => {
     const dlen = Math.sqrt(ddx * ddx + ddy * ddy);
 
     const width = TILE_SIZE * 0.46;
-    // Rungs: short ladders (like 76-84) = less, else all same and even spacing
-    const rungs = (from === 76 && to === 84) ? 7 : 12;
+    // Use the exact same rung count for every ladder, uniformly spaced
+    const rungs = LADDER_RUNG_COUNT;
     const rungStep = 1 / (rungs - 1);
 
     const perp = { x: -ddy / dlen, y: ddx / dlen };
