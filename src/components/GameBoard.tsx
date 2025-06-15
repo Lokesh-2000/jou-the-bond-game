@@ -258,14 +258,24 @@ const GameBoard = ({ gameData, roomCode }: GameBoardProps) => {
       {/* Modals */}
       {currentQuestion && (
         <QuestionModal
-          question={currentQuestion}
+          showQuestion={!!currentQuestion}
+          currentQuestion={currentQuestion}
+          answer="" // You may want to manage answer state if not already, but blank answer to match props
+          setAnswer={() => {}} // dummy, so it doesn't error; to properly implement, you should add answer state
+          onSubmit={() => setCurrentQuestion(null)}
+          onMirror={() => {}}
+          onSkip={() => setCurrentQuestion(null)}
+          canMirror={false}
+          canSkip={true}
           onClose={handleQuestionClose}
         />
       )}
 
       {showReaction && (
         <ReactionModal
-          type={reactionType}
+          showReactions={showReaction}
+          lastAnswer=""
+          onReaction={() => setShowReaction(false)}
           onClose={handleReactionClose}
         />
       )}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import BoardTile from './BoardTile';
 import SnakeOverlay from './SnakeOverlay';
@@ -21,15 +20,13 @@ const GameBoardGrid = ({ player1Position, player2Position, onTileClick, relation
           ? row * 10 + (10 - col)
           : row * 10 + (col + 1);
         
-        const isPlayer1Here = player1Position === position;
-        const isPlayer2Here = player2Position === position;
-        
+        // For correct prop: pass player positions directly and let BoardTile decide what to render
         rowTiles.push(
           <BoardTile
             key={position}
             tileNumber={position}
-            isPlayer1Here={isPlayer1Here}
-            isPlayer2Here={isPlayer2Here}
+            player1Position={player1Position}
+            player2Position={player2Position}
             onClick={() => onTileClick(position)}
           />
         );
